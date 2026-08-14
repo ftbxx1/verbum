@@ -1,0 +1,20 @@
+# game.mcscript — a little adventure written in Verbum.
+
+when player joins
+    welcome player with Welcome to the server
+
+when player dies
+    tell player Better luck next time
+
+when player touches water
+    kill player
+
+when player breaks diamond ore
+    add 10 to player's coins
+
+when player reaches area castle
+    open castle gate
+
+when player has 100 coins
+    give player diamond sword
+    tell player You are now a champion

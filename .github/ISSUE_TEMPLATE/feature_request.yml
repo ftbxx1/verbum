@@ -1,0 +1,25 @@
+name: Feature request
+description: A new sentence the language should understand
+labels: [enhancement]
+body:
+  - type: textarea
+    id: sentence
+    attributes:
+      label: The sentence you want
+      description: What should a player be able to write? Give the exact English.
+    validations:
+      required: true
+  - type: textarea
+    id: behaviour
+    attributes:
+      label: What should it do?
+      description: Describe the expected behaviour in plain English.
+    validations:
+      required: true
+  - type: checkboxes
+    id: plan
+    attributes:
+      label: Willing to help?
+      options:
+        - label: I can write the tests for it
+        - label: I can implement it in the interpreter

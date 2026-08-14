@@ -1,0 +1,11 @@
+name: Verbum
+main: dev.verbum.paper.VerbumPaperPlugin
+version: 1.0.0
+api-version: 1.21
+author: Verbum
+description: A beginner-friendly English scripting language for Minecraft.
+commands:
+  verbum:
+    description: Verbum plugin commands
+    usage: /verbum reload
+    aliases: [vb]
