@@ -3,6 +3,7 @@ package dev.verbum.engine;
 import dev.verbum.api.EngineRegistrar;
 import dev.verbum.api.VerbumPlugin;
 import dev.verbum.ast.Program;
+import dev.verbum.i18n.KeywordResolver;
 import dev.verbum.interp.Interpreter;
 import dev.verbum.interp.Trigger;
 import dev.verbum.lex.Line;
@@ -32,11 +33,27 @@ public final class ScriptEngine implements EngineRegistrar {
     private final Interpreter interpreter;
     private final List<String> pluginNames = new ArrayList<>();
     private DataStore dataStore;
+    private KeywordResolver resolver = KeywordResolver.ENGLISH;
 
     public ScriptEngine(McRuntime runtime) {
         this.runtime = runtime;
         this.interpreter = new Interpreter(runtime);
     }
+
+    /** Sets the keyword language for future loads ("es", "de", "fr", ...). Unknown codes fall back to English. */
+    public ScriptEngine setLanguage(String code) {
+        this.resolver = KeywordResolver.forCode(code);
+        return this;
+    }
+
+    /** Sets the keyword language by its native name ("spanish", "español", "deutsch", ...). */
+    public ScriptEngine setLanguageByName(String name) {
+        this.resolver = KeywordResolver.forName(name);
+        return this;
+    }
+
+    /** The language this engine is currently writing keywords in. */
+    public KeywordResolver resolver() { return resolver; }
 
     public Interpreter interpreter() { return interpreter; }
     public McRuntime runtime() { return runtime; }
@@ -44,7 +61,7 @@ public final class ScriptEngine implements EngineRegistrar {
     /** Load source text with a friendly filename used in errors. */
     public void load(String source, String filename) {
         List<Line> lines = new Tokenizer(source, filename).tokenize();
-        Program program = new Parser(lines).parse();
+        Program program = new Parser(lines, resolver).parse();
         interpreter.load(program);
     }
 

@@ -34,6 +34,10 @@ public final class Tokenizer {
     /** Tokenize the whole source into a list of logical lines (comments and blanks removed). */
     public List<Line> tokenize() {
         List<Line> lines = new ArrayList<>();
+        String source = this.source;
+        if (!source.isEmpty() && source.charAt(0) == '\uFEFF') {
+            source = source.substring(1); // strip UTF-8 byte-order mark
+        }
         String[] raw = source.replace("\r\n", "\n").split("\n", -1);
         for (int i = 0; i < raw.length; i++) {
             int lineNumber = i + 1;

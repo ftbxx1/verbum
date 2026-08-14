@@ -2,6 +2,7 @@ package dev.verbum.parser;
 
 import dev.verbum.ast.*;
 import dev.verbum.error.VerbumError;
+import dev.verbum.i18n.KeywordResolver;
 import dev.verbum.lex.Line;
 import dev.verbum.lex.Token;
 
@@ -22,8 +23,37 @@ public final class Parser {
     private int cursor = 0;
 
     public Parser(List<Line> lines) {
-        this.lines = lines;
+        this(lines, KeywordResolver.ENGLISH);
     }
+
+    /**
+     * Parses using a keyword resolver so the first word of every line can be
+     * written in another language ("dar" -> "give", "töte" -> "kill", ...).
+     * Only the first word of each line is rewritten; arguments and free text
+     * are left exactly as the author wrote them.
+     */
+    public Parser(List<Line> lines, KeywordResolver resolver) {
+        this.lines = normalizeFirstWords(lines, resolver);
+    }
+
+    private static List<Line> normalizeFirstWords(List<Line> lines, KeywordResolver resolver) {
+        List<Line> out = new ArrayList<>(lines.size());
+        for (Line line : lines) {
+            List<Token> tokens = line.tokens();
+            if (tokens.isEmpty()) { out.add(line); continue; }
+            Token first = tokens.get(0);
+            String resolved = resolver.resolve(first.text());
+            if (resolved.equals(first.text())) {
+                out.add(line);
+            } else {
+                List<Token> normalized = new ArrayList<>(tokens);
+                normalized.set(0, Token.word(resolved));
+                out.add(new Line(line.lineNumber(), line.indent(), normalized));
+            }
+        }
+        return out;
+    }
+
 
     public Program parse() {
         Program program = new Program();

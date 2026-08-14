@@ -2,20 +2,24 @@ package dev.verbum.cli;
 
 import dev.verbum.engine.ScriptEngine;
 import dev.verbum.error.VerbumError;
+import dev.verbum.i18n.KeywordResolver;
 import dev.verbum.interp.Trigger;
 import dev.verbum.runtime.MockMcRuntime;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Command-line entry point for Verbum.
  *
- *   java -jar verbum-engine.jar check  <file>   -> parse and report
- *   java -jar verbum-engine.jar run    <file>   -> load + run a demo scenario
- *   java -jar verbum-engine.jar demo            -> run the acceptance test offline
- *   java -jar verbum-engine.jar help            -> usage
+ *   java -jar verbum-engine.jar check  <file>          -> parse and report
+ *   java -jar verbum-engine.jar run    <file>          -> load + run a demo scenario
+ *   java -jar verbum-engine.jar demo                   -> run the acceptance test offline
+ *   java -jar verbum-engine.jar languages              -> list the 100 supported languages
+ *   java -jar verbum-engine.jar check <file> -lang es  -> check a Spanish script
+ *   java -jar verbum-engine.jar help                   -> usage
  */
 public final class VerbumCli {
 
@@ -24,8 +28,9 @@ public final class VerbumCli {
         try {
             switch (args[0].toLowerCase()) {
                 case "demo" -> runAcceptanceDemo();
-                case "check" -> check(args.length > 1 ? args[1] : null);
-                case "run" -> runFile(args.length > 1 ? args[1] : null);
+                case "check" -> check(args.length > 1 ? args[1] : null, lang(args));
+                case "run" -> runFile(args.length > 1 ? args[1] : null, lang(args));
+                case "languages" -> listLanguages();
                 case "help", "-h", "--help" -> help();
                 default -> { System.out.println("I do not know the command: " + args[0]); help(); }
             }
@@ -36,21 +41,33 @@ public final class VerbumCli {
         }
     }
 
+    /** Extracts -lang <code> (or -language <code>) from the command line. */
+    private static String lang(String[] args) {
+        for (int i = 1; i < args.length - 1; i++) {
+            if (args[i].equalsIgnoreCase("-lang") || args[i].equalsIgnoreCase("-language")) {
+                return args[i + 1];
+            }
+        }
+        return null;
+    }
+
     // ---------------------------------------------------------------- check
 
-    private static void check(String file) {
+    private static void check(String file, String lang) {
         if (file == null) { System.out.println("I need a file name:  check <file>"); return; }
         ScriptEngine engine = new ScriptEngine(new MockMcRuntime());
+        if (lang != null) engine.setLanguage(lang);
         engine.loadFile(file);
         System.out.println("The file " + file + " is valid Verbum. No problems found.");
     }
 
     // ---------------------------------------------------------------- run
 
-    private static void runFile(String file) {
+    private static void runFile(String file, String lang) {
         if (file == null) { System.out.println("I need a file name:  run <file>"); return; }
         MockMcRuntime runtime = new MockMcRuntime();
         ScriptEngine engine = new ScriptEngine(runtime);
+        if (lang != null) engine.setLanguage(lang);
         engine.loadFile(file);
         engine.onServerStart();
         simulate(engine);
@@ -104,6 +121,17 @@ public final class VerbumCli {
         System.out.println(pass ? "ACCEPTANCE TEST: PASS" : "ACCEPTANCE TEST: FAIL");
     }
 
+    // ---------------------------------------------------------------- languages
+
+    private static void listLanguages() {
+        System.out.println("Verbum speaks " + KeywordResolver.codes().size()
+                + " languages. Use  -lang <code>  to pick one. Examples:\n");
+        for (String code : KeywordResolver.codes()) {
+            System.out.printf("  %-5s %s%n", code, KeywordResolver.nativeName(code));
+        }
+        System.out.println("\nExample:  java -jar verbum-engine.jar check saludos.vb -lang es");
+    }
+
     // ---------------------------------------------------------------- helpers
 
     private static void simulate(ScriptEngine engine) {
@@ -150,12 +178,15 @@ public final class VerbumCli {
                 Verbum — a beginner-friendly English language for Minecraft
 
                 Usage:
-                  check  <file>      check a .vb / .mcscript file for problems
-                  run    <file>      load and run a small demo scenario
-                  demo               run the offline acceptance test
-                  help               show this help
+                  check  <file> [ -lang <code> ]   check a .vb / .mcscript file for problems
+                  run    <file> [ -lang <code> ]   load and run a small demo scenario
+                  languages                        list the 100 supported keyword languages
+                  demo                             run the offline acceptance test
+                  help                             show this help
 
-                Example:
-                  java -jar verbum-engine.jar run game.mcscript""");
+                Examples:
+                  java -jar verbum-engine.jar run game.mcscript
+                  java -jar verbum-engine.jar check saludos.vb -lang es
+                  java -jar verbum-engine.jar languages""");
     }
 }

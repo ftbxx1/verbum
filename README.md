@@ -174,3 +174,10 @@ powershell -File run-tests.ps1    # acceptance demo + full test suite in one go
 - [Beginner guide](verbum-engine/docs/GUIDE.md)
 - [Command reference](verbum-engine/docs/COMMANDS.md)
 - [Install on a server](verbum-paper/docs/INSTALL.md)
+
+## Join the community
+
+Have a question, an idea, or a script you want to share? Come say hi on our
+Discord server:
+
+**https://discord.gg/qnpHBEmbUC**

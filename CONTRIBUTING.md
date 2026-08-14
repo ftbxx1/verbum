@@ -50,3 +50,9 @@ The project has two parts:
 
 Be kind. This is a learning-friendly project — assume good faith, explain
 things clearly, and never gatekeep.
+
+## Community
+
+Questions and ideas are welcome on the official Discord server:
+
+**https://discord.gg/qnpHBEmbUC**
