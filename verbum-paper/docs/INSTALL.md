@@ -11,8 +11,9 @@ Put Paper on your machine:
 
 ## 2. Install the plugin
 
-- Copy `verbum-paper-1.0.0.jar` (or the full `verbum-paper-*.jar`) from
-  `verbum-paper/target/` into your server's `plugins/` folder.
+Grab the latest `verbum-paper-*.jar` from the [Releases page](https://github.com/ftbxx1/verbum/releases)
+(or build from source: `mvn package`, then copy it from `verbum-paper/target/`)
+into your server's `plugins/` folder.
 
 ## 3. Add your scripts
 
@@ -48,5 +49,6 @@ java -jar verbum-engine.jar demo                    # acceptance test -> PASS
 To run the automated test suite:
 
 ```
-mvn -pl verbum-engine test
+mvn package                  # builds both modules and runs all tests
+powershell -File run-tests.ps1
 ```

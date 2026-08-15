@@ -47,7 +47,7 @@ verbum-engine/      The language core (pure Java, no Minecraft needed)
   src/main/resources/scripts/
     acceptance.vb   the end-to-end acceptance test
     game.mcscript   the flagship example
-    examples/       10 more example scripts
+    examples/       14 more example scripts (events, menus, economy, pvp, quests ...)
   src/test/java/    lexer, parser & interpreter unit tests
   docs/             SPEC, GUIDE, COMMANDS
 verbum-paper/       The real Paper plugin (bridge to live Minecraft)
@@ -157,9 +157,9 @@ when player goes to bed         when player wakes up
 
 ## Quick start (real server)
 
-Build the plugin, drop it in `plugins/`, add files to
-`plugins/Verbum/scripts/`, run `/verbum reload`. Full steps: see
-`verbum-paper/docs/INSTALL.md`.
+Install the plugin and the CLI from the [Releases page](https://github.com/ftbxx1/verbum/releases),
+drop the plugin jar in `plugins/`, add files to `plugins/Verbum/scripts/`, run
+`/verbum reload`. Full steps: see `verbum-paper/docs/INSTALL.md`.
 
 ## Tests
 
