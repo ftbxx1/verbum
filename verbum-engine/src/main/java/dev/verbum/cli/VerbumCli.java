@@ -57,8 +57,14 @@ public final class VerbumCli {
         if (file == null) { System.out.println("I need a file name:  check <file>"); return; }
         ScriptEngine engine = new ScriptEngine(new MockMcRuntime());
         if (lang != null) engine.setLanguage(lang);
-        engine.loadFile(file);
-        System.out.println("The file " + file + " is valid Verbum. No problems found.");
+        try {
+            engine.loadFile(file);
+            System.out.println("The file " + file + " is valid Verbum. No problems found.");
+        } catch (VerbumError e) {
+            System.out.println(e.pretty());
+        } catch (Exception e) {
+            System.out.println("Verification error:\n  " + e);
+        }
     }
 
     // ---------------------------------------------------------------- run

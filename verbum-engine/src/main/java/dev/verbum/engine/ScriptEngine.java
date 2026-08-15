@@ -19,6 +19,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import dev.verbum.ast.ActionCall;
+import dev.verbum.ast.Block;
+import dev.verbum.ast.CustomAction;
+import dev.verbum.ast.EventHandler;
+import dev.verbum.ast.MenuBlock;
+import dev.verbum.ast.Stmt;
+import dev.verbum.ast.CommandHandler;
+import dev.verbum.error.VerbumError;
+
 /**
  * The top-level facade. It reads a .vb file, tokenizes, parses, and hands the
  * program to the interpreter, which talks to the Minecraft runtime.
@@ -65,13 +74,101 @@ public final class ScriptEngine implements EngineRegistrar {
         interpreter.load(program);
     }
 
+    /** Validate a script's syntax and report errors without running it.
+     *  Throws {@link VerbumError} for each problem found, carrying line numbers.
+     *  Use {@link #load(String, String)} to actually run the script.
+     */
+    public void validate(String source, String filename) {
+        List<Line> lines = new Tokenizer(source, filename).tokenize();
+        Program program = new Parser(lines, resolver).parse();
+
+        // Walk the AST and check each top-level construct for common problems.
+        for (CustomAction action : program.actions()) {
+            validateCustomAction(action);
+        }
+        for (EventHandler event : program.events()) {
+            validateEvent(event);
+        }
+        for (CommandHandler cmd : program.commands()) {
+            validateCommand(cmd);
+        }
+        for (MenuBlock menu : program.menus()) {
+            validateMenu(menu);
+        }
+    }
+
+    /** Validate a script file from disk (syntax + semantic checks, no execution). */
+    public void validateFile(String path) {
+        try {
+            String source = Files.readString(Path.of(path));
+            validate(source, path);
+        } catch (IOException e) {
+            throw new VerbumError("I could not read the file: " + path + "\n" + e.getMessage());
+        }
+    }
+
     /** Load and parse a script file from disk. */
     public void loadFile(String path) {
         try {
             String source = Files.readString(Path.of(path));
             load(source, path);
         } catch (IOException e) {
-            throw new dev.verbum.error.VerbumError("I could not read the file: " + path + "\n" + e.getMessage());
+            throw new VerbumError("I could not read the file: " + path + "\n" + e.getMessage());
+        }
+    }
+
+    // ------------------------------------------------------------------ AST validation
+
+    /** Walk a CustomAction (function) and report problems. */
+    private void validateCustomAction(CustomAction action) {
+        if (action.name() == null || action.name().isBlank()) {
+            throw new VerbumError(action.line(), "Custom action must have a name.\nExample:  action reward player");
+        }
+        if (action.body() == null) {
+            throw new VerbumError(action.line(), "Custom action has no body.\nExample:  action reward player\n    give player 10 diamonds", "Try: action reward player\n    give player 10 diamonds");
+        }
+        // Validate statements in the body
+        Block body = action.body();
+        if (body != null) {
+            for (Stmt stmt : body.statements()) {
+                validateStatement(stmt);
+            }
+        }
+    }
+
+    /** Walk an EventHandler and report problems. */
+    private void validateEvent(EventHandler event) {
+        // Event handlers: the parser already ensures basic syntax.
+        // Future: check trigger patterns, condition validity.
+    }
+
+    /** Walk a CommandHandler and report problems. */
+    private void validateCommand(CommandHandler cmd) {
+        if (cmd.name() == null || cmd.name().isBlank()) {
+            throw new VerbumError(cmd.line(), "Command must have a word.\nExample:  command mycmd ...");
+        }
+    }
+
+    /** Walk a MenuBlock and report problems. */
+    private void validateMenu(MenuBlock menu) {
+        // Menus: minimal checks for now.
+    }
+
+    /** Validate a single statement node. */
+    private void validateStatement(Stmt stmt) {
+        if (stmt == null) return;
+        int line = stmt.line();
+        // Action calls
+        if (stmt instanceof ActionCall) {
+            ActionCall ac = (ActionCall) stmt;
+            // Check the verb is not empty
+            if (ac.verb() == null || ac.verb().isBlank()) {
+                throw new VerbumError(line, "Action must have a verb.\nExample:  give player 10 diamonds");
+            }
+        }
+        // Custom actions (recursive functions)
+        else if (stmt instanceof CustomAction) {
+            validateCustomAction((CustomAction) stmt);
         }
     }
 
@@ -87,7 +184,7 @@ public final class ScriptEngine implements EngineRegistrar {
     /** Advance simulation time; runs every/condition handlers. Call roughly each second. */
     public void tick() { interpreter.tick(); }
 
-    // ---- ecosystem: add-ons ------------------------------------------------
+// ---- ecosystem: add-ons ------------------------------------------------
 
     @Override public void registerAction(dev.verbum.api.NativeAction a) { interpreter.registerNativeAction(a); }
     @Override public void registerFunction(dev.verbum.api.NativeFunction f) { interpreter.registerNativeFunction(f); }
@@ -108,7 +205,7 @@ public final class ScriptEngine implements EngineRegistrar {
 
     @Override public List<String> plugins() { return new ArrayList<>(pluginNames); }
 
-    // ---- persistence --------------------------------------------------------
+// ---- persistence --------------------------------------------------------
 
     /** Attach a store (e.g. a {@link dev.verbum.store.JsonDataStore} file). */
     public void setDataStore(DataStore store) { this.dataStore = store; }
