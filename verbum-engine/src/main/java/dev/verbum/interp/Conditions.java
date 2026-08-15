@@ -151,13 +151,6 @@ public final class Conditions {
         Boolean cmp = compare(words, it);
         if (cmp != null) return cmp;
 
-        // server has more than N players online
-        if ((s.contains("players") || s.contains("player")) && s.contains("more than") && s.contains("online")) {
-            int i = indexOf(words, "online") - 1;
-            double n = Double.parseDouble(words.get(i >= 0 ? i : words.size() - 1).replace(",", ""));
-            return r.onlinePlayers() > n;
-        }
-
         // player has N item
         int has = indexOf(words, "has");
         if (has >= 0) {
@@ -680,6 +673,18 @@ public final class Conditions {
 
     /** Live world values (stats, distance) resolved before the plain compare(). */
     private static Boolean liveCompare(List<String> words, Interpreter it, McRuntime r, String focus, String s) {
+        // server has more than 10 players online  |  server has less than 5 players online
+        if (s.contains("online") && (s.contains("players") || s.contains(" player "))) {
+            double want = -1;
+            for (String w : words) if (isNumber(w.replace(",", ""))) { want = Double.parseDouble(w.replace(",", "")); break; }
+            if (want < 0) return null;
+            int online = r.onlinePlayers();
+            if (s.contains("more than") || s.contains("greater than")) return online > want;
+            if (s.contains("less than") || s.contains("lower than") || s.contains("fewer than")) return online < want;
+            if (s.contains("at least")) return online >= want;
+            if (s.contains("at most")) return online <= want;
+            return online == want;
+        }
         if (s.contains("distance")) {
             int frm = indexOf(words, "from");
             int bet = indexOf(words, "between");

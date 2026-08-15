@@ -28,6 +28,7 @@ public final class MathWords {
             if (b >= 0 && and > b) {
                 double lo = Double.parseDouble(words.get(b + 1).replace(",", ""));
                 double hi = Double.parseDouble(words.get(and + 1).replace(",", ""));
+                if (lo > hi) { double tmp = lo; lo = hi; hi = tmp; }
                 Random r = ThreadLocalRandom.current();
                 if (lo == Math.floor(lo) && hi == Math.floor(hi)) {
                     return r.nextInt((int) hi - (int) lo + 1) + lo;

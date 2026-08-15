@@ -613,6 +613,7 @@ public final class MockMcRuntime implements McRuntime {
     // ---- systems & logic ---------------------------------------------------------
     @Override public void setSidebarTitle(String title) { sidebarTitle = title; log("sidebar title " + title); }
     @Override public void setSidebarLine(int line, String text) {
+        if (line < 0) line = 0;
         while (sidebarLines.size() <= line) sidebarLines.add("");
         sidebarLines.set(line, text);
         log("sidebar line " + (line + 1) + " " + text);

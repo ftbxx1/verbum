@@ -505,7 +505,7 @@ public final class Actions {
             case "setsidebartitle": r.setSidebarTitle(interpText(it, a)); break;
             case "setsidebarline": {
                 double[] nums = numbersIn(a);
-                int which = nums.length > 0 ? (int) nums[0] - 1 : 0;
+                int which = nums.length > 0 ? Math.max(0, (int) nums[0] - 1) : 0;
                 int to = indexOfIgnoreCase(a, "to");
                 String txt = to >= 0 ? interpText(it, a.subList(to + 1, a.size())) : interpText(it, a);
                 r.setSidebarLine(which, txt);
@@ -882,6 +882,7 @@ public final class Actions {
         n2.add(nums.get(0));
         for (int k = 0; k < ops.size(); k++) {
             char op = ops.get(k);
+            if (k + 1 >= nums.size()) throw new VerbumError(line, "I expected a number after that operator.\nExample:  set x to 5 plus 3");
             double r = nums.get(k + 1);
             if (op == '*') n2.set(n2.size() - 1, n2.get(n2.size() - 1) * r);
             else if (op == '/') n2.set(n2.size() - 1, n2.get(n2.size() - 1) / r);
@@ -1236,6 +1237,7 @@ public final class Actions {
     // ---- give/take -----------------------------------------------------------
 
     private static void giveAction(Interpreter it, List<String> a, int line) {
+        if (a.isEmpty()) throw new VerbumError(line, "I need to know what to give and who to give it to.\nExample:  give player 5 diamonds");
         int to = indexOfIgnoreCase(a, "to");
         if (to >= 0) {
             // give 5 diamonds to player
@@ -1296,6 +1298,7 @@ public final class Actions {
     }
 
     private static void takeAction(Interpreter it, List<String> a, int line) {
+        if (a.isEmpty()) throw new VerbumError(line, "I need to know what to take and who to take it from.\nExample:  take 5 diamonds from player");
         int from = indexOfIgnoreCase(a, "from");
         if (from >= 0) {
             String t = target(it, a, from + 1);

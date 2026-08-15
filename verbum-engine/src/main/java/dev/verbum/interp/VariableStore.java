@@ -58,6 +58,8 @@ public final class VariableStore {
             List<Object> l = bucket(scope).containsKey(base) && bucket(scope).get(base) instanceof List<?> m
                     ? new ArrayList<>((List<?>) m) : new ArrayList<>();
             long idx = Long.parseLong(sub);
+            if (idx < 1) throw new VerbumError("I could not use the list position " + sub + " - positions start at 1.");
+            if (idx > 1000000) throw new VerbumError("The list position " + sub + " is too big - the maximum is 1000000.");
             while (l.size() < idx) l.add(null);
             l.set((int) (idx - 1), value);
             bucket(scope).put(base, l);

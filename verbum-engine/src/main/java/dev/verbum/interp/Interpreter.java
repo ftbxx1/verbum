@@ -483,6 +483,7 @@ public final class Interpreter {
 
     private void execRepeat(RepeatTimes r) {
         double n = new MathWords(this).numberOf(substitute(r.countWords()), r.line());
+        if (n > 10000000) throw new VerbumError(r.line(), "That repeat would run " + (long) n + " times - the most I can run is 10000000.");
         for (int i = 0; i < n; i++) {
             try { runBlock(r.body()); }
             catch (BreakX e) { break; }
