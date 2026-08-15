@@ -608,6 +608,33 @@ public final class Interpreter {
     public dev.verbum.api.NativeFunction nativeFunction(String name) { return nativeFunctions.get(name.toLowerCase()); }
     public List<dev.verbum.api.EventWordMapper> nativeEventMappers() { return nativeEventMappers; }
     public List<dev.verbum.api.NativeCondition> nativeConditions() { return nativeConditions; }
+    // ---- new addon registries ----
+    private final java.util.Map<String, dev.verbum.api.NativeExpression> nativeExpressions = new HashMap<>();
+    private final java.util.Map<String, dev.verbum.api.NativeType> nativeTypes = new HashMap<>();
+    private final java.util.Map<String, dev.verbum.api.NativeProperty> nativeProperties = new HashMap<>();
+    private final java.util.Map<String, dev.verbum.api.NativeCommand> nativeCommands = new HashMap<>();
+    private final java.util.Map<String, dev.verbum.api.NativePlaceholder> nativePlaceholders = new HashMap<>();
+
+    public void registerNativeExpression(dev.verbum.api.NativeExpression e) {
+        if (e != null && e.word() != null) nativeExpressions.put(e.word().toLowerCase(), e);
+    }
+    public void registerNativeType(dev.verbum.api.NativeType t) {
+        if (t != null) nativeTypes.put(t.label().toLowerCase(), t);
+    }
+    public void registerNativeProperty(dev.verbum.api.NativeProperty p) {
+        if (p != null) nativeProperties.put(p.name().toLowerCase(), p);
+    }
+    public void registerNativeCommand(dev.verbum.api.NativeCommand c) {
+        if (c != null && c.word() != null) nativeCommands.put(c.word().toLowerCase(), c);
+    }
+    public void registerNativePlaceholder(dev.verbum.api.NativePlaceholder p) {
+        if (p != null && p.name() != null) nativePlaceholders.put(p.name().toLowerCase(), p);
+    }
+    public dev.verbum.api.NativeExpression nativeExpression(String word) { return nativeExpressions.get(word.toLowerCase()); }
+    public dev.verbum.api.NativeType nativeType(String label) { return nativeTypes.get(label.toLowerCase()); }
+    public dev.verbum.api.NativeProperty nativeProperty(String name) { return nativeProperties.get(name.toLowerCase()); }
+    public dev.verbum.api.NativeCommand nativeCommand(String word) { return nativeCommands.get(word.toLowerCase()); }
+    public dev.verbum.api.NativePlaceholder nativePlaceholder(String name) { return nativePlaceholders.get(name.toLowerCase()); }
 
     /** Runs a script line that starts with the  plugin  keyword:  plugin <name> <words...>. */
     public void runPluginLine(List<String> words, int line) {

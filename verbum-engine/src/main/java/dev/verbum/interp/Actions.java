@@ -1182,6 +1182,12 @@ public final class Actions {
             if (isMathHelper(joined)) {
                 return operandValue(it, words, line);
             }
+            // native expressions:  set x to sqrt of 16  /  set y to random element of list
+            if (it.nativeExpression(joined) != null) {
+                List<String> exprWords = new ArrayList<>(words);
+                double val = it.nativeExpression(joined).run(it, exprWords, line);
+                return VariableStore.asText(val);
+            }
             // text and list helpers:  uppercase of X, join of {list::*} by , ,
             // random element of {list::*}, alphabetically sorted {list::*}, ...
             Object helper = textAndListValue(it, words, line);
