@@ -807,6 +807,67 @@ public class MockMcRuntime implements McRuntime {
         for (String t : targets(target)) log("firework " + t + " " + color);
     }
 
+    // ---- depth batch: jailing / homes / riding / repair / holograms / whitelist -----
+
+    private final Map<String, Boolean> jailState = new HashMap<>();
+    private final Map<String, Location> homeState = new HashMap<>();
+    private final Map<String, Boolean> whitelistState = new HashMap<>();
+    private final Map<String, String> holos = new HashMap<>();
+
+    @Override public void jail(String target) {
+        for (String t : targets(target)) { jailState.put(t.toLowerCase(), true); log("jail " + t); }
+    }
+    @Override public void unjail(String target) {
+        for (String t : targets(target)) { jailState.remove(t.toLowerCase()); log("unjail " + t); }
+    }
+    @Override public boolean isJailed(String target) {
+        return targets(target).stream().anyMatch(t -> jailState.getOrDefault(t.toLowerCase(), false));
+    }
+    @Override public void setHome(String target) {
+        for (String t : targets(target)) { homeState.put(t.toLowerCase(), player(t).loc); log("set home " + t); }
+    }
+    @Override public void teleportHome(String target) {
+        for (String t : targets(target)) {
+            Location h = homeState.get(t.toLowerCase());
+            if (h != null) log("teleport " + t + " home");
+        }
+    }
+    @Override public boolean hasHome(String target) {
+        return targets(target).stream().anyMatch(t -> homeState.containsKey(t.toLowerCase()));
+    }
+    @Override public void mount(String target) {
+        for (String t : targets(target)) { player(t).inVehicle = true; log("mount " + t); }
+    }
+    @Override public void dismount(String target) {
+        for (String t : targets(target)) { player(t).inVehicle = false; log("dismount " + t); }
+    }
+    @Override public boolean isRiding(String target) {
+        return targets(target).stream().anyMatch(t -> player(t).inVehicle);
+    }
+    @Override public void repairItem(String target, boolean all) {
+        for (String t : targets(target)) log("repair " + t + (all ? " all" : ""));
+    }
+    @Override public void spawnHologram(String target, String name, String text) {
+        for (String t : targets(target)) { holos.put(t.toLowerCase() + ":" + name.toLowerCase(), text); log("hologram " + t + " " + text); }
+    }
+    @Override public void removeHologram(String target, String name) {
+        for (String t : targets(target)) holos.remove(t.toLowerCase() + ":" + name.toLowerCase());
+    }
+    @Override public void setWhitelisted(String target, boolean on) {
+        for (String t : targets(target)) whitelistState.put(t.toLowerCase(), on);
+    }
+    @Override public boolean isWhitelisted(String target) {
+        return targets(target).stream().anyMatch(t -> whitelistState.getOrDefault(t.toLowerCase(), false));
+    }
+
+    /** Test hook: names of active holograms for a player, e.g.  "welcome". */
+    public java.util.List<String> hologramNames(String target) {
+        java.util.List<String> out = new ArrayList<>();
+        for (Map.Entry<String, String> e : holos.entrySet())
+            if (e.getKey().startsWith(normalize(target) + ":")) out.add(e.getKey().split(":")[1]);
+        return out;
+    }
+
     static String normalize(String s) { return s == null ? "" : s.trim().toLowerCase().replaceAll("\\s+", " "); }
 
     private static double min(double a, double b) { return a < b ? a : b; }

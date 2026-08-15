@@ -69,6 +69,7 @@ public final class Interpreter {
     private final java.util.Map<String, dev.verbum.api.NativeFunction> nativeFunctions = new HashMap<>();
     private final List<dev.verbum.api.EventWordMapper> nativeEventMappers = new ArrayList<>();
     private final List<dev.verbum.api.NativeCondition> nativeConditions = new ArrayList<>();
+    private final java.util.Map<String, dev.verbum.api.PluginBridge> pluginBridges = new HashMap<>();
 
     public Interpreter(McRuntime runtime) {
         this.runtime = runtime;
@@ -532,10 +533,20 @@ public final class Interpreter {
             runCustomAction(action, args, call.line());
             return;
         }
-        dev.verbum.api.NativeAction nativeAction = nativeActions.get(verb.toLowerCase());
-        if (nativeAction != null) {
-            nativeAction.run(this, args, call.line());
-            return;
+        // Native action match supports multi-word verbs: try the longest prefix
+        // that an add-on registered, so a plugin can own "set crate key" or
+        // "create a chest" as one verb. E.g.  create crate red  ->  "create crate"
+        // (2 words) beats  "create"  (1 word).
+        for (int width = 2; width >= 1; width--) {
+            if (width > 1 && args.size() < width - 1) continue;
+            String head = width == 1
+                    ? verb.toLowerCase()
+                    : (verb.toLowerCase() + " " + String.join(" ", args.subList(0, width - 1))).toLowerCase();
+            dev.verbum.api.NativeAction nativeAction = nativeActions.get(head);
+            if (nativeAction != null) {
+                nativeAction.run(this, width == 1 ? args : args.subList(width - 1, args.size()), call.line());
+                return;
+            }
         }
         Actions.execute(this, verb, args, call.line());
     }
@@ -591,9 +602,33 @@ public final class Interpreter {
     public void registerEventWordMapper(dev.verbum.api.EventWordMapper m) {
         if (m != null) nativeEventMappers.add(m);
     }
+    public void registerPluginBridge(dev.verbum.api.PluginBridge bridge) {
+        if (bridge != null && bridge.name() != null) pluginBridges.put(bridge.name().toLowerCase(), bridge);
+    }
     public dev.verbum.api.NativeFunction nativeFunction(String name) { return nativeFunctions.get(name.toLowerCase()); }
     public List<dev.verbum.api.EventWordMapper> nativeEventMappers() { return nativeEventMappers; }
     public List<dev.verbum.api.NativeCondition> nativeConditions() { return nativeConditions; }
+
+    /** Runs a script line that starts with the  plugin  keyword:  plugin <name> <words...>. */
+    public void runPluginLine(List<String> words, int line) {
+        if (words.isEmpty()) throw err(line, "I need a plugin name after  plugin.\nExample:  plugin crates create crate KeyCrate");
+        String name = words.get(0);
+        List<String> rest = words.subList(1, words.size());
+        dev.verbum.api.PluginBridge bridge = pluginBridges.get(name.toLowerCase());
+        if (bridge == null) {
+            String known = pluginBridges.isEmpty() ? "none" : String.join(", ", pluginBridges.keySet());
+            throw err(line, "I do not know a plugin called  " + name + ".\nPlugins I know: " + known);
+        }
+        bridge.action(this, rest, line);
+    }
+
+    /** Answers  if plugin <name> ...  as a condition. */
+    public boolean pluginCondition(List<String> words) {
+        if (words.isEmpty()) return false;
+        dev.verbum.api.PluginBridge bridge = pluginBridges.get(words.get(0).toLowerCase());
+        if (bridge == null) return false;
+        return bridge.condition(this, words.subList(1, words.size()));
+    }
 
     private void handleWait(List<String> args, int line) {
         for (String a : args) {

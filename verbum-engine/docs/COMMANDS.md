@@ -3,7 +3,7 @@
 Generated from the interpreter source so it always matches what the server
 actually understands. Verbs are the first word of a line inside a block.
 
-> **261 verbs, 113 event words, 102 language keyword fallbacks.**
+> **273 verbs, 113 event words, 102 language keyword fallbacks.**
 
 ## Trigger words (start a block)
 
@@ -16,6 +16,12 @@ actually understands. Verbs are the first word of a line inside a block.
 | `command <name>` | define a custom chat command, e.g. `/hello` |
 | `menu <name>` | define a clickable inventory menu |
 
+
+## Third-party plugins
+
+| Verb | You can also write |
+|------|--------------------------|
+| `plugin` |  |
 
 ## Variables & math
 
@@ -412,6 +418,22 @@ actually understands. Verbs are the first word of a line inside a block.
 | `setvisible` |  |
 | `strikelightning` |  |
 | `subtitle` |  |
+
+## Depth batch: jail, homes, riding, repair, holograms, whitelist
+
+| Verb | You can also write |
+|------|--------------------------|
+| `dismount` |  |
+| `hologram` |  |
+| `home` |  |
+| `jail` |  |
+| `removehologram` |  |
+| `repair` |  |
+| `ride` |  |
+| `sethome` |  |
+| `unjail` |  |
+| `unwhitelist` |  |
+| `whitelist` |  |
 
 ## Event words (what `when player ...` understands)
 

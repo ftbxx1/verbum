@@ -724,4 +724,80 @@ public final class PaperRuntime implements McRuntime {
         ItemStack item = new ItemStack(pool[(int) (Math.random() * pool.length)]);
         for (Player p : players(target)) p.getInventory().addItem(item);
     }
+
+    // ---- depth batch: jailing / homes / riding / repair / holograms / whitelist -----
+
+    private final Map<String, Boolean> jailed = new HashMap<>();
+    @Override public void jail(String target) {
+        for (Player p : players(target)) { jailed.put(p.getName().toLowerCase(), true); }
+    }
+    @Override public void unjail(String target) {
+        for (Player p : players(target)) jailed.remove(p.getName().toLowerCase());
+    }
+    @Override public boolean isJailed(String target) {
+        return players(target).stream().anyMatch(p -> jailed.getOrDefault(p.getName().toLowerCase(), false));
+    }
+
+    private final Map<String, org.bukkit.Location> homes = new HashMap<>();
+    @Override public void setHome(String target) {
+        for (Player p : players(target)) homes.put(p.getName().toLowerCase(), p.getLocation().clone());
+    }
+    @Override public void teleportHome(String target) {
+        for (Player p : players(target)) {
+            org.bukkit.Location home = homes.get(p.getName().toLowerCase());
+            if (home != null) p.teleport(home);
+        }
+    }
+    @Override public boolean hasHome(String target) {
+        return players(target).stream().anyMatch(p -> homes.containsKey(p.getName().toLowerCase()));
+    }
+
+    @Override public boolean isRiding(String target) {
+        return players(target).stream().anyMatch(p -> p.isInsideVehicle());
+    }
+    @Override public void mount(String target) {
+        // Mount the nearest rideable entity within 4 blocks.
+        for (Player p : players(target)) {
+            if (p.isInsideVehicle()) continue;
+            p.getNearbyEntities(4, 4, 4).stream()
+                .filter(e -> e instanceof org.bukkit.entity.Vehicle || e instanceof org.bukkit.entity.WaterMob)
+                .findFirst().ifPresent(v -> v.addPassenger(p));
+        }
+    }
+    @Override public void dismount(String target) {
+        for (Player p : players(target)) p.leaveVehicle();
+    }
+
+    @Override public void repairItem(String target, boolean all) {
+        for (Player p : players(target)) {
+            if (all) {
+                for (ItemStack item : p.getInventory().getContents())
+                    if (item != null && item.getType().getMaxDurability() > 0) item.setDurability((short) 0);
+            } else {
+                ItemStack held = p.getInventory().getItemInMainHand();
+                if (held != null && held.getType().getMaxDurability() > 0) held.setDurability((short) 0);
+            }
+        }
+    }
+
+    private final Map<String, String> holograms = new HashMap<>(); // "player:name" -> text
+    @Override public void spawnHologram(String target, String name, String text) {
+        for (Player p : players(target)) {
+            String key = (p.getName() + ":" + name).toLowerCase();
+            holograms.put(key, text);
+        }
+    }
+    @Override public void removeHologram(String target, String name) {
+        for (Player p : players(target)) {
+            String key = (p.getName() + ":" + name).toLowerCase();
+            holograms.remove(key);
+        }
+    }
+
+    @Override public boolean isWhitelisted(String target) {
+        return players(target).stream().anyMatch(Player::isWhitelisted);
+    }
+    @Override public void setWhitelisted(String target, boolean on) {
+        for (Player p : players(target)) p.setWhitelisted(on);
+    }
 }

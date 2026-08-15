@@ -99,7 +99,12 @@ public final class ScriptEngine implements EngineRegistrar {
         String name = plugin.name() == null ? "anonymous" : plugin.name();
         if (!pluginNames.contains(name)) pluginNames.add(name);
         plugin.register(this);
+        dev.verbum.api.PluginBridge bridge = plugin.bridge();
+        if (bridge != null) interpreter.registerPluginBridge(bridge);
     }
+
+    /** Register a plugin bridge directly (for plugins that skip VerbumPlugin). */
+    public void registerPluginBridge(dev.verbum.api.PluginBridge bridge) { interpreter.registerPluginBridge(bridge); }
 
     @Override public List<String> plugins() { return new ArrayList<>(pluginNames); }
 

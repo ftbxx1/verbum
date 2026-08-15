@@ -27,6 +27,9 @@ public final class Actions {
         String v = canonical(verb);
 
         switch (v) {
+            // ---- third-party plugins ---------------------------------------------
+            case "plugin": it.runPluginLine(a, line); break;
+
             // ---- variables & math ------------------------------------------------
             case "set": if (!setCapability(it, a, r, line)) setVariable(it, a, line); break;
             case "let": setVariable(it, a, line); break;
@@ -750,6 +753,43 @@ public final class Actions {
                 break;
             }
 
+            // ---- depth batch: jail, homes, riding, repair, holograms, whitelist ----
+            case "jail": r.jail(targetOrFocus(it, a)); break;
+            case "unjail": case "free": case "release": r.unjail(targetOrFocus(it, a)); break;
+            case "sethome": case "set home": r.setHome(targetOrFocus(it, a)); break;
+            case "home": case "teleport home": case "goto home": r.teleportHome(targetOrFocus(it, a)); break;
+            case "ride": case "mount": r.mount(targetOrFocus(it, a)); break;
+            case "dismount": case "get off": r.dismount(targetOrFocus(it, a)); break;
+            case "repair": {
+                boolean all = containsWord(a, "all") || containsWord(a, "everything");
+                // strip the quantifier so  repair all  repairs the focus player's gear, not "all"
+                String t = targetOrFocus(it, all ? a.subList(0, 0) : a);
+                r.repairItem(t, all);
+                break;
+            }
+            case "hologram": case "spawnhologram": {
+                // hologram player with text Welcome
+                int with = indexOfIgnoreCase(a, "with");
+                int of = indexOfIgnoreCase(a, "of");
+                String t = targetOrFocus(it, a);
+                String name = "hologram";
+                if (of >= 0 && of + 1 < a.size()) name = text(a, of + 1, "hologram name");
+                String txt = with >= 0 && with + 1 < a.size() ? interpText(it, a.subList(with + 1, a.size())) : interpText(it, a);
+                r.spawnHologram(t, name, txt);
+                break;
+            }
+            case "removehologram": {
+                int of = indexOfIgnoreCase(a, "of");
+                String t = targetOrFocus(it, a);
+                String name = of >= 0 && of + 1 < a.size() ? text(a, of + 1, "hologram name") : "hologram";
+                r.removeHologram(t, name);
+                break;
+            }
+            case "whitelist": case "setwhitelisted":
+                r.setWhitelisted(targetOrFocus(it, a), !(containsWord(a, "off") || containsWord(a, "no") || containsWord(a, "false")));
+                break;
+            case "unwhitelist": r.setWhitelisted(targetOrFocus(it, a), false); break;
+
             default:
                 // friendly "unknown action" error with a hint
                 throw new VerbumError(line,
@@ -1074,6 +1114,10 @@ public final class Actions {
                 case "muted": case "is muted": return r.isMuted(focus);
                 case "weapon": case "held weapon": return r.weapon(focus);
                 case "team": case "team name": return r.teamOf(focus);
+                case "jailed": case "is jailed": case "in jail": return r.isJailed(focus);
+                case "home": case "has home": case "has a home": return r.hasHome(focus);
+                case "riding": case "is riding": case "in a vehicle": return r.isRiding(focus);
+                case "whitelisted": case "is whitelisted": return r.isWhitelisted(focus);
                 default: return null;
             }
         }
@@ -1910,9 +1954,14 @@ public final class Actions {
 
 
     /** Resolves the target word (player -> focus, all/players -> ALL). */
+/** Target player when the phrase names one, else the current focus player. */
+    static String targetOrFocus(Interpreter it, List<String> a) {
+        if (a.isEmpty()) return focusName(it);
+        return target(it, a, 0);
+    }
+
     static String target(Interpreter it, List<String> a, int i) {
-        if (i >= a.size()) return McRuntime.ALL;
-        String w = a.get(i);
+        if (i >= a.size()) return McRuntime.ALL;        String w = a.get(i);
         if (w.equalsIgnoreCase("player") || w.equalsIgnoreCase("me") || w.equalsIgnoreCase("myself")) {
             return it.focus().isEmpty() ? "Unknown" : it.focus();
         }

@@ -9,7 +9,11 @@ public interface VerbumPlugin {
 
     String name();
 
+    /** Called on every /verbum reload and on server start, after the engine is ready. */
     default void register(EngineRegistrar registrar) { }
+
+    /** Default plugin handle for  plugin <name> ...  scripts, if this plugin exposes one. */
+    default PluginBridge bridge() { return null; }
 
     /** Called when the engine is shutting down (persistence flush hook). */
     default void onDisable() { }

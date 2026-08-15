@@ -68,10 +68,12 @@ public final class VerbumCli {
         MockMcRuntime runtime = new MockMcRuntime();
         ScriptEngine engine = new ScriptEngine(runtime);
         if (lang != null) engine.setLanguage(lang);
+        dev.verbum.api.VerbumAPI.publish(engine);
         engine.loadFile(file);
         engine.onServerStart();
         simulate(engine);
         printLog(runtime, file);
+        dev.verbum.api.VerbumAPI.unpublish();
     }
 
     // ---------------------------------------------------------------- acceptance demo

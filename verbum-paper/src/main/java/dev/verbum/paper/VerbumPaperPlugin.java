@@ -23,6 +23,14 @@ public final class VerbumPaperPlugin extends JavaPlugin {
     private PaperRuntime runtime;
     private BukkitTask tickTask;
     private VerbumGui gui;
+    private final java.util.Set<dev.verbum.api.VerbumPlugin> addons = new java.util.LinkedHashSet<>();
+
+    /** Hooks an add-on plugin (called from its onEnable through VerbumAPI bag). */
+    public void addAddon(dev.verbum.api.VerbumPlugin plugin) {
+        if (plugin == null) return;
+        addons.add(plugin);
+        if (engine != null) engine.registerPlugin(plugin);
+    }
 
     @Override
     public void onEnable() {
@@ -35,6 +43,13 @@ public final class VerbumPaperPlugin extends JavaPlugin {
         runtime = new PaperRuntime(this);
         engine = new ScriptEngine(runtime);
         gui = new VerbumGui(this);
+
+        // Publish the engine so add-ons (plugins depending on Verbum) can wire
+        // themselves in via VerbumAPI during their own onEnable.
+        dev.verbum.api.VerbumAPI.publish(engine);
+        dev.verbum.api.VerbumAPI.setJoinHook(plugin -> {
+            if (plugin != null) addAddon(plugin);
+        });
 
         registerBridge();
         getServer().getPluginManager().registerEvents(gui, this);
@@ -55,6 +70,7 @@ public final class VerbumPaperPlugin extends JavaPlugin {
     @Override
     public void onDisable() {
         if (tickTask != null) tickTask.cancel();
+        dev.verbum.api.VerbumAPI.unpublish();
         if (engine != null) { try { engine.onServerStop(); } catch (Exception ignored) {} }
         getLogger().info("Verbum disabled.");
     }
@@ -66,6 +82,12 @@ public final class VerbumPaperPlugin extends JavaPlugin {
     public void reloadScripts() {
         File scripts = new File(getDataFolder(), "scripts");
         engine = new ScriptEngine(runtime);
+        dev.verbum.api.VerbumAPI.publish(engine);
+        // Re-register every add-on that joined at runtime so /verbum reload
+        // gives them the fresh engine (their vocabulary survives reloads).
+        for (dev.verbum.api.VerbumPlugin plugin : addons) {
+            try { engine.registerPlugin(plugin); } catch (Exception e) { getLogger().log(Level.WARNING, "Could not reload add-on " + plugin.name(), e); }
+        }
         File[] files = scripts.listFiles((d, n) -> n.endsWith(".vb") || n.endsWith(".mcscript"));
         if (files == null) return;
         int loaded = 0;

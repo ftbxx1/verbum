@@ -74,6 +74,11 @@ public final class Conditions {
         String focus = it.focus();
         String s = join(words).toLowerCase();
 
+        // third-party plugin conditions:  if plugin <name> ...
+        if (words.size() > 1 && words.get(0).equalsIgnoreCase("plugin")) {
+            return it.pluginCondition(words.subList(1, words.size()));
+        }
+
         // event-cancelled:  when ... cancel event  ->  later handlers see  event is cancelled
         if (s.equals("event cancelled") || s.equals("event is cancelled")
                 || s.equals("the event cancelled") || s.equals("the event is cancelled")) {
@@ -102,6 +107,13 @@ public final class Conditions {
         // coordinate comparisons: above y 60 / below y 10
         Boolean coord = coordCompare(words, it);
         if (coord != null) return coord;
+
+        // depth batch: jail / home / riding / whitelist  (must run before the
+        // generic "has item" branch, so  player has a home  reads the real state)
+        if (s.contains("jail")) return r.isJailed(focus);
+        if (s.contains("whitelist")) return r.isWhitelisted(focus);
+        if (s.contains("has home") || s.contains("has a home") || s.contains("home")) return r.hasHome(focus);
+        if (s.contains("riding") || s.contains("on a horse") || s.contains("in a vehicle")) return r.isRiding(focus);
 
         // number of X is N / equals N   (live counts like  number of all players)
         String lc = s.toLowerCase();

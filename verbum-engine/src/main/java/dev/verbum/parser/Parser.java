@@ -634,6 +634,17 @@ public final class Parser {
             {"play sound at", "playsoundat"}, {"play a sound at", "playsoundat"},
             {"fill region", "fillregion"}, {"fill area", "fillregion"},
             {"give random item", "randomitem"}, {"give a random item", "randomitem"}, {"random item", "randomitem"},
+            // depth batch: jail, homes, riding, repair, holograms, whitelist
+            {"lock player in jail", "jail"}, {"send player to jail", "jail"}, {"put player in jail", "jail"},
+            {"release player", "unjail"}, {"let player out of jail", "unjail"},
+            {"set home", "sethome"}, {"set player's home", "sethome"}, {"set a home", "sethome"},
+            {"go home", "home"}, {"teleport home", "home"}, {"send home", "home"}, {"warp home", "home"},
+            {"ride a horse", "ride"}, {"get on a horse", "ride"}, {"get off a horse", "dismount"},
+            {"repair", "repair"}, {"repair item", "repair"}, {"fix item", "repair"},
+            {"spawn hologram", "hologram"}, {"create hologram", "hologram"}, {"make hologram", "hologram"},
+            {"remove hologram", "removehologram"}, {"delete hologram", "removehologram"},
+            {"add to whitelist", "whitelist"}, {"whitelist player", "whitelist"},
+            {"remove from whitelist", "unwhitelist"}, {"unwhitelist player", "unwhitelist"}, {"remove whitelist", "unwhitelist"},
         };
         for (String[] p : phrases) MULTI_WORD_VERBS.put(p[0], p[1]);
     }

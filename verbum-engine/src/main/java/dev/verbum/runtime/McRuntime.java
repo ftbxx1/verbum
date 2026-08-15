@@ -409,6 +409,36 @@ public interface McRuntime {
     default Object loadPersistent(String key) { return null; }
     default void savePersistent(String key, Object value) { }
 
+    // ----------------------------------------------------------- jailing
+    /** Lock a player in jail: they cannot move/act until unjailed. */
+    default void jail(String target) { }
+    default void unjail(String target) { }
+    default boolean isJailed(String target) { return false; }
+
+    // ----------------------------------------------------------- homes
+    /** Remember the player's current location as their bed/home. */
+    default void setHome(String target) { }
+    default void teleportHome(String target) { }
+    default boolean hasHome(String target) { return false; }
+
+    // ----------------------------------------------------------- riding
+    default void mount(String target) { }
+    default void dismount(String target) { }
+    default boolean isRiding(String target) { return false; }
+
+    // ----------------------------------------------------------- repair
+    /** Rebuild a broken item (held item, or all equipped+inventory when all=true). */
+    default void repairItem(String target, boolean all) { }
+
+    // ----------------------------------------------------------- holograms
+    /** Spawn a floating text hologram (named "hologram" or <name>) above the target. */
+    default void spawnHologram(String target, String name, String text) { }
+    default void removeHologram(String target, String name) { }
+
+    // ----------------------------------------------------------- whitelist
+    default void setWhitelisted(String target, boolean on) { }
+    default boolean isWhitelisted(String target) { return false; }
+
     /** Two corners from comma-free text, e.g. corners Spawn and Corner2. */
     static Location[] parseCorners(String a, String b) {
         throw new VerbumError("I could not understand those location words.");
