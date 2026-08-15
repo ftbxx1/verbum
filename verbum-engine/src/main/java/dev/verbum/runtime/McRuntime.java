@@ -258,6 +258,62 @@ public interface McRuntime {
     default void setCooldown(String target, String action, double seconds) { }
     default boolean hasCooldown(String target, String action) { return false; }
 
+    // ----------------------------------------------------------- inventory & slots
+    /** Put an item into a specific inventory slot (1..36). */
+    default void setSlot(String target, int slot, String item) { }
+    /** Swap the main and off hand items. */
+    default void swapHands(String target) { }
+    /** Empty a player's inventory. */
+    default void clearInventory(String target) { }
+    /** Change the stack size of an item the player holds. */
+    default void setItemAmount(String target, String item, int amount) { }
+    /** Toggle the "unbreakable" tag on a held item. */
+    default void setItemUnbreakable(String target, String item, boolean unbreakable) { }
+    /** Set the skull owner of a skull item the player holds. */
+    default void setSkullOwner(String target, String item, String owner) { }
+
+    // ----------------------------------------------------------- player tuning
+    /** Paper fly speed (default ~0.05). */
+    default void setFlySpeed(String target, double speed) { }
+    /** Attack speed attribute in hits per second. */
+    default void setAttackSpeed(String target, double speed) { }
+    default void setSaturation(String target, double value) { }
+    /** Remaining air/breath ticks. */
+    default void setAir(String target, int ticks) { }
+    /** Actually toggle flight state (not just allow-flight). */
+    default void setFlying(String target, boolean flying) { }
+    /** Toggle elytra gliding. */
+    default void setGliding(String target, boolean gliding) { }
+    /** Put armor in a specific slot: helmet / chestplate / leggings / boots / offhand. */
+    default void setArmorSlot(String target, String armor, String piece) { }
+    default void setDisplayName(String target, String name) { }
+    /** The name shown in tab and above the head (name tag). */
+    default void setPlayerListName(String target, String name) { }
+    /** Glow outline color for a player. */
+    default void setGlowColor(String target, String color) { }
+    default void setTabListHeaderFooter(String target, String header, String footer) { }
+    /** Set the player's respawn (bed spawn) point to their current position. */
+    default void setRespawnPoint(String target) { }
+    /** Launch a player up with a velocity power (0..10). */
+    default void launch(String target, double power) { }
+    default void removeAllEffects(String target) { }
+
+    // ----------------------------------------------------------- world effects
+    /** Drop XP orbs at a location. */
+    default void dropExperience(Location at, int amount) { }
+    /** Drop an item entity at a location. */
+    default void dropItemAt(Location at, String item, int count) { }
+    /** Lightning at a coordinate. */
+    default void lightningAt(Location at) { }
+    default void playSoundAt(Location at, String sound) { }
+    default void stopAllSounds(String target) { }
+    /** Play a music disc (item name) for a player. */
+    default void playMusicDisc(String target, String disc) { }
+    /** Fill a cuboid between two corners with a block. */
+    default void fillRegion(Location a, Location b, String block) { }
+    /** Give one random item (from a small curated pool). */
+    default void giveRandomItem(String target) { }
+
     // ----------------------------------------------------------- world & environment
     default void setWeatherDuration(double seconds) { }
     default void setStorm(boolean storm) { }
@@ -296,6 +352,56 @@ public interface McRuntime {
     default void addDeath(String target) { }
     default void giveEnchanted(String target, String item, String enchant, int level) { }
     default void shootColoredFirework(String target, String color) { }
+
+    // ----------------------------------------------------------- live: player vitals
+    /** Total experience points (0..), not levels. */
+    default double experience(String target) { return 0; }
+    /** Experience points needed to reach the next level. */
+    default int xpToNextLevel(String target) { return 0; }
+    /** Progress to the next level, 0..1. */
+    default double xpPercent(String target) { return 0; }
+    default double saturation(String target) { return 0; }
+    default double absorption(String target) { return 0; }
+    /** Remaining air / breath ticks. */
+    default int air(String target) { return 0; }
+    default int maxAir(String target) { return 0; }
+    default int fireTicks(String target) { return 0; }
+    default int freezeTicks(String target) { return 0; }
+    /** Paper walk/fly speed on the player scale (default ~0.1 / ~0.05). */
+    default double walkSpeed(String target) { return 0.1; }
+    default double flySpeed(String target) { return 0.05; }
+    /** Network latency in milliseconds. */
+    default int ping(String target) { return 0; }
+    default String worldName(String target) { return "world"; }
+    default double yaw(String target) { return 0; }
+    default double pitch(String target) { return 0; }
+    /** Compass direction: north / south / east / west. */
+    default String facing(String target) { return "north"; }
+    default boolean isGlowing(String target) { return false; }
+    default boolean isInvisible(String target) { return false; }
+    /** The item in the main hand (material name). */
+    default String holdingItem(String target) { return ""; }
+    /** Main-hand hotbar slot, 0..8. */
+    default int heldSlot(String target) { return 0; }
+    /** Number of empty inventory slots. */
+    default int emptySlots(String target) { return 0; }
+    /** Name of the scoreboard team the player is on ("" when none). */
+    default String teamOf(String target) { return ""; }
+
+    // ----------------------------------------------------------- live: world & server
+    default String difficulty() { return "normal"; }
+    /** World time in ticks. */
+    default long worldTime() { return 6000; }
+    /** Whole in-game days elapsed. */
+    default long dayCount() { return 0; }
+    default long worldSeed() { return 0; }
+    /** World border size in blocks (0 when unset). */
+    default double worldBorder() { return 0; }
+    default Location spawnPoint() { return Location.at("world", 0, 64, 0); }
+    /** Server player limit. */
+    default int maxPlayers() { return 20; }
+    /** Ticks per second, usually 20. */
+    default double tps() { return 20; }
 
     /** Simple persistence hook (SQLite/YAML). Concrete runtimes implement as they can. */
     default Object loadPersistent(String key) { return null; }

@@ -212,6 +212,218 @@ public final class Actions {
             case "setinvincible": r.setInvincible(target(it, a, 0), !(containsWord(a, "off") || containsWord(a, "no"))); break;
             case "setcooldown": cooldownAction(it, a, r, line); break;
 
+            // ---- inventory & slots -----------------------------------------------------
+            case "swap": case "swaphands": r.swapHands(focusName(it)); break;
+            case "setslot": {
+                int of = indexOfIgnoreCase(a, "of");
+                int to = indexOfIgnoreCase(a, "to");
+                int slot = 1;
+                double[] sn = numbersIn(a.subList(0, to >= 0 ? to : a.size()));
+                if (sn.length > 0) slot = (int) sn[0];
+                String owner = ownerOf(it, a, of);
+                String item = to >= 0 && to + 1 < a.size() ? VariableStore.join(a.subList(to + 1, a.size())) : "";
+                r.setSlot(owner, slot, item.isEmpty() ? "diamond" : item);
+                break;
+            }
+            case "setitemamount": {
+                int of = indexOfIgnoreCase(a, "of");
+                int to = indexOfIgnoreCase(a, "to");
+                String owner = ownerOf(it, a, of);
+                int amount = 1;
+                String item = "";
+                if (to >= 0 && to + 1 < a.size()) {
+                    List<String> rhs = a.subList(to + 1, a.size());
+                    double[] an = numbersIn(rhs);
+                    if (an.length > 0) { amount = (int) an[0]; item = VariableStore.join(rhs).replaceFirst("^\\d+(\\s+x\\d+)?\\s*", "").trim(); }
+                    else item = VariableStore.join(rhs);
+                }
+                r.setItemAmount(owner, item.isEmpty() ? "item" : item, amount);
+                break;
+            }
+            case "setunbreakable": {
+                int of = indexOfIgnoreCase(a, "of");
+                String owner = ownerOf(it, a, of);
+                boolean on = !(containsWord(a, "off") || containsWord(a, "no") || containsWord(a, "false"));
+                String held = r.holdingItem(owner);
+                r.setItemUnbreakable(owner, held.isEmpty() ? "item" : held, on);
+                break;
+            }
+            case "setskullowner": {
+                int of = indexOfIgnoreCase(a, "of");
+                int to = indexOfIgnoreCase(a, "to");
+                String owner = ownerOf(it, a, of);
+                String item = "";
+                int end = to >= 0 ? to : a.size();
+                if (of >= 0 && of + 2 < end) item = VariableStore.join(a.subList(of + 2, end)).trim();
+                String skullFor = to >= 0 && to + 1 < a.size() ? interpText(it, a.subList(to + 1, a.size())) : "player";
+                if (item.isEmpty()) item = r.holdingItem(owner);
+                r.setSkullOwner(owner, item.isEmpty() ? "player head" : item, skullFor);
+                break;
+            }
+            case "put": {
+                // put diamond in slot 3 of player
+                int in = indexOfIgnoreCase(a, "in");
+                int of = indexOfIgnoreCase(a, "of");
+                int slotIdx = indexOfIgnoreCase(a, "slot");
+                String owner = ownerOf(it, a, of);
+                int slot = 1;
+                if (slotIdx >= 0 && slotIdx + 1 < a.size()) {
+                    double[] psn = numbersIn(a.subList(slotIdx + 1, Math.min(slotIdx + 3, a.size())));
+                    if (psn.length > 0) slot = (int) psn[0];
+                }
+                int end = in >= 0 ? in : a.size();
+                String item = VariableStore.join(a.subList(0, end)).trim().replaceFirst("^\\d+(\\s+x\\d+)?\\s+", "");
+                r.setSlot(owner, slot, item.isEmpty() ? "diamond" : item);
+                break;
+            }
+
+            // ---- player tuning -----------------------------------------------------------
+            case "setattackspeed": case "setsaturation": case "setair": {
+                int of = indexOfIgnoreCase(a, "of");
+                String owner = ownerOf(it, a, of);
+                double[] vals = numbersIn(a);
+                double val = vals.length > 0 ? vals[0] : amount(it, a, 1, "set attack speed to 12");
+                if (verb.equals("setair")) r.setAir(owner, (int) val);
+                else if (verb.equals("setsaturation")) r.setSaturation(owner, val);
+                else r.setAttackSpeed(owner, val);
+                break;
+            }
+            case "setflying": r.setFlying(ownerOf(it, a, indexOfIgnoreCase(a, "of")), !(containsWord(a, "off") || containsWord(a, "no"))); break;
+            case "setgliding": r.setGliding(ownerOf(it, a, indexOfIgnoreCase(a, "of")), !(containsWord(a, "off") || containsWord(a, "no"))); break;
+            case "setarmorslot": {
+                // set armor slot of player to diamond helmet on head
+                int on = indexOfIgnoreCase(a, "on");
+                int of = indexOfIgnoreCase(a, "of");
+                int to = indexOfIgnoreCase(a, "to");
+                String piece = on >= 0 && on + 1 < a.size() ? a.get(on + 1) : "chest";
+                String owner = ownerOf(it, a, of);
+                int itemFrom = to >= 0 ? to + 1 : (of >= 0 ? of + 2 : 1);
+                int itemTo = on >= 0 ? on : a.size();
+                String item = itemFrom > 0 && itemFrom < itemTo ? VariableStore.join(a.subList(itemFrom, itemTo)).trim() : "diamond chestplate";
+                r.setArmorSlot(owner, item, piece);
+                break;
+            }
+            case "setdisplayname": {
+                int of = indexOfIgnoreCase(a, "of");
+                int to = indexOfIgnoreCase(a, "to");
+                String owner = ownerOf(it, a, of);
+                String name = to >= 0 && to + 1 < a.size() ? interpText(it, a.subList(to + 1, a.size())) : text(a, 1, "set display name");
+                r.setDisplayName(owner, name);
+                break;
+            }
+            case "setlistname": case "setnametag": {
+                int of = indexOfIgnoreCase(a, "of");
+                int to = indexOfIgnoreCase(a, "to");
+                String owner = ownerOf(it, a, of);
+                String name = to >= 0 && to + 1 < a.size() ? interpText(it, a.subList(to + 1, a.size())) : text(a, 1, "set list name");
+                r.setPlayerListName(owner, name);
+                break;
+            }
+            case "setglowcolor": {
+                int of = indexOfIgnoreCase(a, "of");
+                int to = indexOfIgnoreCase(a, "to");
+                String owner = ownerOf(it, a, of);
+                String color = to >= 0 && to + 1 < a.size() ? VariableStore.join(a.subList(to + 1, a.size())) : "yellow";
+                r.setGlowColor(owner, color);
+                break;
+            }
+            case "settablistheader": {
+                int of = indexOfIgnoreCase(a, "of");
+                int to = indexOfIgnoreCase(a, "to");
+                String owner = ownerOf(it, a, of);
+                String header = "";
+                String footer = "";
+                if (to >= 0 && to + 1 < a.size()) {
+                    List<String> tail = new ArrayList<>(a.subList(to + 1, a.size()));
+                    int andIdx = indexOfIgnoreCase(tail, "and");
+                    if (andIdx >= 0) {
+                        header = interpText(it, tail.subList(0, andIdx));
+                        footer = interpText(it, tail.subList(andIdx + 1, tail.size()));
+                    } else {
+                        header = interpText(it, tail);
+                    }
+                }
+                r.setTabListHeaderFooter(owner, header, footer);
+                break;
+            }
+            case "setrespawn": case "setbedspawn": r.setRespawnPoint(ownerOf(it, a, indexOfIgnoreCase(a, "of"))); break;
+            case "launch": r.launch(focusName(it), amount(it, a, 1, "launch player 5")); break;
+            case "cleareffects": case "removealleffects": r.removeAllEffects(ownerOf(it, a, indexOfIgnoreCase(a, "of"))); break;
+            case "setfoodlevel": {
+                int of = indexOfIgnoreCase(a, "of");
+                String owner = ownerOf(it, a, of);
+                double[] fn = numbersIn(a);
+                r.setFood(owner, fn.length > 0 ? fn[0] : amount(it, a, 1, "set food level to 20"));
+                break;
+            }
+            case "fullheal": r.healToFull(ownerOf(it, a, indexOfIgnoreCase(a, "of"))); break;
+            case "unfreeze": r.freeze(ownerOf(it, a, indexOfIgnoreCase(a, "of")), 0); break;
+            case "feedfull": r.feed(ownerOf(it, a, indexOfIgnoreCase(a, "of")), 20); break;
+
+            // ---- broadcasts --------------------------------------------------------------
+            case "broadcasttitle": r.title(McRuntime.ALL, interpText(it, a), ""); break;
+            case "broadcastactionbar": r.actionbar(McRuntime.ALL, interpText(it, a)); break;
+            case "broadcasttoast": r.toast(McRuntime.ALL, interpText(it, a)); break;
+            case "broadcastsound": case "soundall": r.playSound(McRuntime.ALL, text(a, 0, "play sound")); break;
+            case "stopsounds": r.stopAllSounds(ownerOf(it, a, indexOfIgnoreCase(a, "of"))); break;
+            case "musicdisc": {
+                int forIdx = indexOfIgnoreCase(a, "for");
+                int of = indexOfIgnoreCase(a, "of");
+                String owner = (forIdx >= 0 || of >= 0) ? ownerOf(it, a, forIdx >= 0 ? forIdx : of) : focusName(it);
+                int cut = Math.max(forIdx, of);
+                String disc = cut >= 0 ? VariableStore.join(a.subList(0, cut)).trim() : VariableStore.join(a);
+                r.playMusicDisc(owner, disc.isEmpty() ? "cat" : disc);
+                break;
+            }
+
+            // ---- world effects (coordinate based) ----------------------------------------
+            case "dropexperience": {
+                double[] ex = numbersIn(a);
+                Location at = ex.length >= 3 ? Location.at(worldOf(it), ex[0], ex[1], ex[2]) : r.locationOf(it.focus());
+                int amt = ex.length >= 4 ? (int) ex[3] : (ex.length >= 1 ? (int) ex[0] : 10);
+                r.dropExperience(at, amt);
+                break;
+            }
+            case "dropat": case "dropitemat": {
+                double[] da = numbersIn(a);
+                Location at = da.length >= 3 ? Location.at(worldOf(it), da[0], da[1], da[2]) : r.locationOf(it.focus());
+                String item = VariableStore.join(a).replaceFirst("^\\d+(\\s+\\d+){2}(\\s+\\d+)?\\s*", "");
+                r.dropItemAt(at, item.isEmpty() ? "diamond" : item, da.length >= 4 ? (int) da[3] : 1);
+                break;
+            }
+            case "lightningat": {
+                double[] la = numbersIn(a);
+                if (la.length >= 3) r.lightningAt(Location.at(worldOf(it), la[0], la[1], la[2]));
+                else r.strikeLightningAt(ownerOf(it, a, -1));
+                break;
+            }
+            case "playsoundat": {
+                double[] sa = numbersIn(a);
+                Location at = sa.length >= 3 ? Location.at(worldOf(it), sa[0], sa[1], sa[2]) : r.locationOf(it.focus());
+                String sound = VariableStore.join(a).replaceFirst("^\\d+(\\s+\\d+){2}\\s*", "");
+                r.playSoundAt(at, sound);
+                break;
+            }
+            case "fill": case "fillregion": {
+                double[] fa = numbersIn(a);
+                int with = indexOfIgnoreCase(a, "with");
+                String block = with >= 0 ? VariableStore.join(a.subList(with + 1, a.size())) : "stone";
+                if (fa.length >= 6) {
+                    r.fillRegion(Location.at(worldOf(it), fa[0], fa[1], fa[2]),
+                            Location.at(worldOf(it), fa[3], fa[4], fa[5]), block);
+                } else {
+                    Location here = r.locationOf(it.focus());
+                    r.fillRegion(here, here, block);
+                }
+                break;
+            }
+            case "randomitem": {
+                int to = indexOfIgnoreCase(a, "to");
+                int forIdx = indexOfIgnoreCase(a, "for");
+                r.giveRandomItem((to >= 0 || forIdx >= 0) ? ownerOf(it, a, to >= 0 ? to : forIdx) : focusName(it));
+                break;
+            }
+
             // ---- xp / levels -------------------------------------------------------------
             case "experience": case "xp": r.giveXp(target(it, a, 0), amount(it, a, 0, "give xp")); break;
             case "levels": r.giveLevels(target(it, a, 0), amount(it, a, 0, "give levels")); break;
@@ -451,7 +663,13 @@ public final class Actions {
                 break;
             }
             case "setinvulnerable": r.setInvulnerable(target(it, a, 0), true); break;
-            case "setflyspeed": r.setWalkSpeed(target(it, a, 0), amount(it, a, 1, "set fly speed")); break;
+            case "setflyspeed": {
+                int of = indexOfIgnoreCase(a, "of");
+                String owner = ownerOf(it, a, of);
+                double[] fv = numbersIn(a);
+                r.setFlySpeed(owner, fv.length > 0 ? fv[0] : amount(it, a, 1, "set fly speed to 0.1"));
+                break;
+            }
             case "setmobhostility": r.setMobHostility(text(a, 0, "set mob hostility"), !containsWord(a, "false")); break;
             case "extinguish": r.ignite(target(it, a, 0), 0); break;
             case "setfrozen": r.freeze(target(it, a, 0), 999); break;
@@ -552,6 +770,18 @@ public final class Actions {
         String j = joined.toLowerCase();
         int to = indexOfIgnoreCase(a, "to");
         String first = a.isEmpty() ? "" : a.get(0).toLowerCase();
+
+        // When the value being assigned is itself a stored/live variable reference
+        // (player's X, world's X, {X}, ...), this is a plain assignment like
+        //   set x to world's border   - never hijack it as a library setter.
+        if (to >= 0 && to + 1 < a.size()) {
+            String val = VariableStore.join(a.subList(to + 1, a.size())).toLowerCase();
+            if (val.contains("'s") || val.contains("::") || val.contains("{")
+                    || val.startsWith("player ") || val.startsWith("world ")
+                    || val.startsWith("global ") || val.startsWith("temp ")) {
+                return false;
+            }
+        }
 
         // Only hijack plain  set  when the words clearly describe a library target,
         // never when they name a stored variable like  set player's score to player's coins.
@@ -794,20 +1024,73 @@ public final class Actions {
                 case "max health": return r.maxHealth(focus);
                 case "food": case "hunger": return r.food(focus);
                 case "level": return (double) r.level(focus);
+                case "experience": case "xp": case "total xp": case "total experience": return r.experience(focus);
+                case "xp to level": case "experience to next level": case "xp needed":
+                    return (double) r.xpToNextLevel(focus);
+                case "xp percent": case "experience percent": case "xp bar": return r.xpPercent(focus);
                 case "x": return r.coord(focus, 'x');
                 case "y": case "altitude": return r.coord(focus, 'y');
                 case "z": return r.coord(focus, 'z');
                 case "gamemode": return r.gamemode(focus);
                 case "biome": return r.biome(focus);
                 case "dimension": return r.dimension(focus);
+                case "world": case "world name": return r.worldName(focus);
+                case "yaw": case "rotation": case "facing yaw": return r.yaw(focus);
+                case "pitch": return r.pitch(focus);
+                case "facing": case "direction": case "compass": case "facing direction": return r.facing(focus);
+                case "saturation": case "saturation level": return r.saturation(focus);
+                case "absorption": case "absorption hearts": return r.absorption(focus);
+                case "air": case "breath": case "remaining air": case "oxygen": return (double) r.air(focus);
+                case "max air": case "maximum air": return (double) r.maxAir(focus);
+                case "fire ticks": case "burn time": case "burning ticks": return (double) r.fireTicks(focus);
+                case "freeze ticks": case "frozen ticks": return (double) r.freezeTicks(focus);
+                case "walk speed": return r.walkSpeed(focus);
+                case "fly speed": return r.flySpeed(focus);
+                case "ping": case "latency": case "ms": return (double) r.ping(focus);
+                case "glowing": case "is glowing": return r.isGlowing(focus);
+                case "invisible": case "is invisible": return r.isInvisible(focus);
+                case "holding": case "held item": case "item in hand": return r.holdingItem(focus);
+                case "held slot": case "hotbar slot": return (double) r.heldSlot(focus);
+                case "empty slots": case "inventory space": case "free slots": return (double) r.emptySlots(focus);
+                case "kills": return (double) r.killCount(focus);
+                case "deaths": return (double) r.deathCount(focus);
+                case "kill streak": case "streak": return (double) r.killStreak(focus);
+                case "health percent": case "hp percent": return r.healthPercent(focus);
+                case "armor": case "armor points": return r.armor(focus);
+                case "sneaking": case "crouching": case "is sneaking": return r.isSneaking(focus);
+                case "sprinting": case "is sprinting": return r.isSprinting(focus);
+                case "flying": case "is flying": return r.isFlying(focus);
+                case "on ground": case "grounded": case "is on ground": return r.isOnGround(focus);
+                case "in water": case "is in water": return r.isInWater(focus);
+                case "in lava": case "is in lava": return r.isInLava(focus);
+                case "burning": case "is burning": return r.isBurning(focus);
+                case "poisoned": case "is poisoned": return r.isPoisoned(focus);
+                case "swimming": case "is swimming": return r.isSwimming(focus);
+                case "gliding": case "is gliding": return r.isGliding(focus);
+                case "falling": case "is falling": return r.isFalling(focus);
+                case "climbing": case "is climbing": return r.isClimbing(focus);
+                case "op": case "operator": case "is op": return r.isOp(focus);
+                case "alive": case "is alive": return r.playerAlive(focus);
+                case "muted": case "is muted": return r.isMuted(focus);
+                case "weapon": case "held weapon": return r.weapon(focus);
+                case "team": case "team name": return r.teamOf(focus);
                 default: return null;
             }
         }
         if (scope == VariableStore.Scope.WORLD) {
             switch (k) {
                 case "time": case "time of day": return r.isDay() ? "day" : "night";
+                case "world time": case "time ticks": case "ticks": return (double) r.worldTime();
                 case "weather": return r.isStorm() ? "thunder" : r.isRain() ? "rain" : "sunny";
                 case "temperature": return "";
+                case "difficulty": return r.difficulty();
+                case "day count": case "days passed": case "days": return (double) r.dayCount();
+                case "seed": case "world seed": return (double) r.worldSeed();
+                case "border": case "world border": case "border size": return r.worldBorder();
+                case "spawn x": case "spawnpoint x": return r.spawnPoint().x();
+                case "spawn y": case "spawnpoint y": return r.spawnPoint().y();
+                case "spawn z": case "spawnpoint z": return r.spawnPoint().z();
+                case "spawn world": case "spawnpoint world": return r.spawnPoint().world();
                 default: return null;
             }
         }
@@ -816,6 +1099,12 @@ public final class Actions {
                 case "all players": case "online players": case "online player count":
                 case "player count": case "players online":
                     return (double) r.onlinePlayers();
+                case "max players": case "player limit": case "server slots": case "max slots":
+                    return (double) r.maxPlayers();
+                case "open slots": case "slots left": case "free player slots":
+                    return (double) Math.max(0, r.maxPlayers() - r.onlinePlayers());
+                case "tps": case "tick rate": case "server tps": case "server's tps":
+                    return r.tps();
                 default: return null;
             }
         }
@@ -1634,9 +1923,28 @@ public final class Actions {
         return w;
     }
 
+    /** Focus player name ("Unknown" when none). */
+    private static String focusName(Interpreter it) {
+        return it.focus().isEmpty() ? "Unknown" : it.focus();
+    }
+
+    /** Owner after  of :  of player / of player's ...  -> focus,  of all  -> ALL, else literal. */
+    private static String ownerOf(Interpreter it, List<String> a, int ofIdx) {
+        if (ofIdx < 0 || ofIdx + 1 >= a.size()) return focusName(it);
+        String w = a.get(ofIdx + 1).toLowerCase();
+        if (w.equals("player") || w.equals("player's") || w.equals("me") || w.equals("myself")) return focusName(it);
+        if (w.equals("players") || w.equals("players'") || w.equals("all") || w.equals("everyone")) return McRuntime.ALL;
+        return a.get(ofIdx + 1);
+    }
+
     private static String text(List<String> a, int from, String hint) {
         if (from >= a.size()) return "";
         return VariableStore.join(a.subList(from, a.size()));
+    }
+
+    /** World name of the focus player (for  drop experience at x y z  and friends). */
+    private static String worldOf(Interpreter it) {
+        return it.runtime().locationOf(it.focus()).world();
     }
 
     /** Message words with %variable% interpolation (used by tell, warn, toast, ...). */

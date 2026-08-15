@@ -41,6 +41,22 @@ public final class MockMcRuntime implements McRuntime {
         public double food = 20;
         public int level = 0;
         public double xp = 0;
+        public double saturation = 5;
+        public double absorption = 0;
+        public int air = 300;
+        public int maxAir = 300;
+        public int fireTicks = 0;
+        public int freezeTicks = 0;
+        public double walkSpeed = 0.1;
+        public double flySpeed = 0.05;
+        public int ping = 20;
+        public double yaw = 0;
+        public double pitch = 0;
+        public String facing = "north";
+        public boolean glowing = false;
+        public boolean invisible = false;
+        public int heldSlot = 0;
+        public String team = "";
         public Location loc = Location.at("world", 0, 64, 0);
         public String dimension = "overworld";
         public String biome = "plains";
@@ -70,6 +86,13 @@ public final class MockMcRuntime implements McRuntime {
 
     public String weather = "sunny";
     public long timeTicks = 6000;   // midday
+    public String difficulty = "normal";
+    public long dayCount = 0;
+    public long seed = 0;
+    public double border = 0;
+    public Location spawn = Location.at("world", 0, 64, 0);
+    public int maxPlayers = 20;
+    public double tpsValue = 20;
 
     // ---- MockPlayer helpers -------------------------------------------------
 
@@ -398,6 +421,46 @@ public final class MockMcRuntime implements McRuntime {
         return (t >= 0 && t < 12000) ? "day" : "night";
     }
 
+    // ---- live vitals: player -----------------------------------------------------
+    @Override public double experience(String target) { return targets(target).stream().mapToDouble(t -> player(t).xp).sum(); }
+    @Override public int xpToNextLevel(String target) { return 0; }
+    @Override public double xpPercent(String target) { return player(target).level % 1; }
+    @Override public double saturation(String target) { return targets(target).stream().mapToDouble(t -> player(t).saturation).sum(); }
+    @Override public double absorption(String target) { return targets(target).stream().mapToDouble(t -> player(t).absorption).sum(); }
+    @Override public int air(String target) { return player(target).air; }
+    @Override public int maxAir(String target) { return player(target).maxAir; }
+    @Override public int fireTicks(String target) { return player(target).fireTicks; }
+    @Override public int freezeTicks(String target) { return player(target).freezeTicks; }
+    @Override public double walkSpeed(String target) { return player(target).walkSpeed; }
+    @Override public double flySpeed(String target) { return player(target).flySpeed; }
+    @Override public int ping(String target) { return player(target).ping; }
+    @Override public String worldName(String target) { return player(target).loc.world(); }
+    @Override public double yaw(String target) { return player(target).yaw; }
+    @Override public double pitch(String target) { return player(target).pitch; }
+    @Override public String facing(String target) { return player(target).facing; }
+    @Override public boolean isGlowing(String target) { return targets(target).stream().anyMatch(t -> player(t).glowing); }
+    @Override public boolean isInvisible(String target) { return targets(target).stream().anyMatch(t -> player(t).invisible); }
+    @Override public String holdingItem(String target) { return player(target).holding; }
+    @Override public int heldSlot(String target) { return player(target).heldSlot; }
+    @Override public int emptySlots(String target) {
+        MockPlayer p = player(target);
+        return Math.max(0, 36 - p.inventory.size());
+    }
+    @Override public String teamOf(String target) {
+        MockPlayer p = player(target);
+        return p.team == null ? "" : p.team;
+    }
+
+    // ---- live vitals: world & server -----------------------------------------------------
+    @Override public String difficulty() { return difficulty; }
+    @Override public long worldTime() { return timeTicks; }
+    @Override public long dayCount() { return dayCount; }
+    @Override public long worldSeed() { return seed; }
+    @Override public double worldBorder() { return border; }
+    @Override public Location spawnPoint() { return spawn; }
+    @Override public int maxPlayers() { return maxPlayers; }
+    @Override public double tps() { return tpsValue; }
+
     // ---- persistence -------------------------------------------------------------------
 
     private final Map<String, Object> persistent = new HashMap<>();
@@ -586,6 +649,87 @@ public final class MockMcRuntime implements McRuntime {
     }
     @Override public boolean hasCooldown(String target, String action) {
         return cooldownSeconds.containsKey(target.toLowerCase() + ":" + normalize(action));
+    }
+
+    // ---- inventory & slots ----------------------------------------------------
+    @Override public void setSlot(String target, int slot, String item) {
+        for (String t : targets(target)) {
+            player(t).inventory.put(normalize(item) + "#" + slot, 1.0);
+            log("slot " + t + " " + slot + " " + item);
+        }
+    }
+    @Override public void swapHands(String target) {
+        for (String t : targets(target)) { player(t).inventory.put("swapped#hand", 1.0); log("swap hands " + t); }
+    }
+    @Override public void clearInventory(String target) {
+        for (String t : targets(target)) { player(t).inventory.clear(); log("clear inventory " + t); }
+    }
+    @Override public void setItemAmount(String target, String item, int amount) {
+        for (String t : targets(target)) log("item amount " + t + " " + item + " " + amount);
+    }
+    @Override public void setItemUnbreakable(String target, String item, boolean unbreakable) {
+        for (String t : targets(target)) log("unbreakable " + t + " " + item + " " + unbreakable);
+    }
+    @Override public void setSkullOwner(String target, String item, String owner) {
+        for (String t : targets(target)) log("skull owner " + t + " " + item + " " + owner);
+    }
+
+    // ---- player tuning ------------------------------------------------------------
+    @Override public void setFlySpeed(String target, double speed) { for (String t : targets(target)) { player(t).flySpeed = speed; log("fly speed " + t + " " + speed); } }
+    @Override public void setAttackSpeed(String target, double speed) { for (String t : targets(target)) log("attack speed " + t + " " + speed); }
+    @Override public void setSaturation(String target, double value) {
+        for (String t : targets(target)) { player(t).saturation = value; log("saturation " + t + " " + value); }
+    }
+    @Override public void setAir(String target, int ticks) {
+        for (String t : targets(target)) { player(t).air = ticks; log("air " + t + " " + ticks); }
+    }
+    @Override public void setFlying(String target, boolean flying) {
+        for (String t : targets(target)) { player(t).flying = flying; log("flying " + t + " " + flying); }
+    }
+    @Override public void setGliding(String target, boolean gliding) {
+        for (String t : targets(target)) { player(t).gliding = gliding; log("gliding " + t + " " + gliding); }
+    }
+    @Override public void setArmorSlot(String target, String armor, String piece) {
+        for (String t : targets(target)) { player(t).wearing.add(normalize(armor)); log("armor slot " + t + " " + piece + " " + armor); }
+    }
+    @Override public void setDisplayName(String target, String name) {
+        for (String t : targets(target)) log("display name " + t + " " + name);
+    }
+    @Override public void setPlayerListName(String target, String name) {
+        for (String t : targets(target)) log("list name " + t + " " + name);
+    }
+    @Override public void setGlowColor(String target, String color) {
+        for (String t : targets(target)) log("glow color " + t + " " + color);
+    }
+    @Override public void setTabListHeaderFooter(String target, String header, String footer) {
+        for (String t : targets(target)) log("tablist header " + t + " " + header + " | " + footer);
+    }
+    @Override public void setRespawnPoint(String target) {
+        for (String t : targets(target)) log("respawn point " + t);
+    }
+    @Override public void launch(String target, double power) {
+        for (String t : targets(target)) log("launch " + t + " " + power);
+    }
+    @Override public void removeAllEffects(String target) {
+        for (String t : targets(target)) { player(t).effects.clear(); log("clear effects " + t); }
+    }
+
+    // ---- world effects ------------------------------------------------------------
+    @Override public void dropExperience(Location at, int amount) { log("xp orbs at " + at + " " + amount); }
+    @Override public void dropItemAt(Location at, String item, int count) { log("drop at " + at + " " + item + " x" + count); }
+    @Override public void lightningAt(Location at) { log("lightning at " + at); }
+    @Override public void playSoundAt(Location at, String sound) { log("sound at " + at + " " + sound); }
+    @Override public void stopAllSounds(String target) {
+        for (String t : targets(target)) log("stop sounds " + t);
+    }
+    @Override public void playMusicDisc(String target, String disc) {
+        for (String t : targets(target)) log("music disc " + t + " " + disc);
+    }
+    @Override public void fillRegion(Location a, Location b, String block) {
+        log("fill " + a + " to " + b + " with " + block);
+    }
+    @Override public void giveRandomItem(String target) {
+        for (String t : targets(target)) { player(t).inventory.put("randomitem", 1.0); log("random item " + t); }
     }
 
     // ---- world & environment ---------------------------------------------------

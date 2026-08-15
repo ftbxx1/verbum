@@ -222,13 +222,13 @@ public final class VariableStore {
             throw new VerbumError("I need a variable name, like  player's coins  or  highscore");
         }
         words = stripBraces(words);
-        String first = words.get(0).toLowerCase().replace("'", "");
+        String first = words.get(0).toLowerCase().replace("'", "").replace("’", "");
         Scope scope;
         int from;
         switch (first) {
             case "player": case "players":
                 scope = Scope.PLAYER; from = 1; break;
-            case "world":
+            case "world": case "worlds":
                 scope = Scope.WORLD; from = 1; break;
             case "global":
                 scope = Scope.GLOBAL; from = 1; break;

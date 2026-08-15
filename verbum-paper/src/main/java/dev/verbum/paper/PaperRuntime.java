@@ -463,4 +463,260 @@ public final class PaperRuntime implements McRuntime {
     }
     @Override public double getScore(String scoreboard) { return 0; }
     @Override public boolean isBossHalfHealth(String mob) { return false; }
+
+    // ---- live vitals: player -----------------------------------------------------
+
+    @Override public double experience(String target) { Player p = first(target); return p == null ? 0 : p.getTotalExperience(); }
+    @Override public int xpToNextLevel(String target) { Player p = first(target); return p == null ? 0 : p.getExpToLevel(); }
+    @Override public double xpPercent(String target) { Player p = first(target); return p == null ? 0 : p.getExp(); }
+    @Override public double saturation(String target) { Player p = first(target); return p == null ? 0 : p.getSaturation(); }
+    @Override public double absorption(String target) { Player p = first(target); return p == null ? 0 : p.getAbsorptionAmount(); }
+    @Override public int air(String target) { Player p = first(target); return p == null ? 0 : p.getRemainingAir(); }
+    @Override public int maxAir(String target) { Player p = first(target); return p == null ? 300 : p.getMaximumAir(); }
+    @Override public int fireTicks(String target) { Player p = first(target); return p == null ? 0 : p.getFireTicks(); }
+    @Override public int freezeTicks(String target) { Player p = first(target); return p == null ? 0 : p.getFreezeTicks(); }
+    @Override public double walkSpeed(String target) { Player p = first(target); return p == null ? 0.1 : p.getWalkSpeed(); }
+    @Override public double flySpeed(String target) { Player p = first(target); return p == null ? 0.05 : p.getFlySpeed(); }
+    @Override public int ping(String target) { Player p = first(target); return p == null ? 0 : p.getPing(); }
+    @Override public String worldName(String target) { Player p = first(target); return p == null ? "world" : p.getWorld().getName(); }
+    @Override public double yaw(String target) { Player p = first(target); return p == null ? 0 : p.getLocation().getYaw(); }
+    @Override public double pitch(String target) { Player p = first(target); return p == null ? 0 : p.getLocation().getPitch(); }
+    @Override public String facing(String target) {
+        Player p = first(target);
+        if (p == null) return "north";
+        float y = p.getLocation().getYaw();
+        if (y < 0) y += 360;
+        if (y >= 315 || y < 45) return "south";
+        if (y < 135) return "west";
+        if (y < 225) return "north";
+        return "east";
+    }
+    @Override public boolean isGlowing(String target) { Player p = first(target); return p != null && p.isGlowing(); }
+    @Override public boolean isInvisible(String target) { Player p = first(target); return p != null && p.isInvisible(); }
+    @Override public String holdingItem(String target) {
+        Player p = first(target);
+        return p == null ? "" : p.getInventory().getItemInMainHand().getType().name().toLowerCase();
+    }
+    @Override public int heldSlot(String target) { Player p = first(target); return p == null ? 0 : p.getInventory().getHeldItemSlot(); }
+    @Override public int emptySlots(String target) {
+        Player p = first(target);
+        if (p == null) return 36;
+        int n = 0;
+        for (ItemStack s : p.getInventory().getContents()) if (s == null || s.getType() == Material.AIR) n++;
+        return n;
+    }
+    @Override public String teamOf(String target) {
+        Player p = first(target);
+        if (p == null) return "";
+        org.bukkit.scoreboard.Team t = p.getScoreboard().getEntryTeam(p.getName());
+        return t == null ? "" : t.getName();
+    }
+
+    // ---- live vitals: world & server -----------------------------------------------------
+
+    @Override public String difficulty() {
+        if (Bukkit.getWorlds().isEmpty()) return "normal";
+        return Bukkit.getWorlds().get(0).getDifficulty().name().toLowerCase();
+    }
+    @Override public long worldTime() {
+        if (Bukkit.getWorlds().isEmpty()) return 6000;
+        return Bukkit.getWorlds().get(0).getTime();
+    }
+    @Override public long dayCount() {
+        if (Bukkit.getWorlds().isEmpty()) return 0;
+        return Bukkit.getWorlds().get(0).getFullTime() / 24000L;
+    }
+    @Override public long worldSeed() {
+        if (Bukkit.getWorlds().isEmpty()) return 0;
+        return Bukkit.getWorlds().get(0).getSeed();
+    }
+    @Override public double worldBorder() {
+        if (Bukkit.getWorlds().isEmpty()) return 0;
+        return Bukkit.getWorlds().get(0).getWorldBorder().getSize();
+    }
+    @Override public Location spawnPoint() {
+        if (Bukkit.getWorlds().isEmpty()) return Location.at("world", 0, 64, 0);
+        org.bukkit.Location s = Bukkit.getWorlds().get(0).getSpawnLocation();
+        return Location.at(Bukkit.getWorlds().get(0).getName(), s.getX(), s.getY(), s.getZ());
+    }
+    @Override public int maxPlayers() { return Bukkit.getMaxPlayers(); }
+    @Override public double tps() {
+        try {
+            double[] t = Bukkit.getTPS();
+            return t.length == 0 ? 20 : Math.min(20, Math.max(0, t[0]));
+        } catch (Throwable ignored) { return 20; }
+    }
+
+    // ---- inventory & slots ------------------------------------------------------------
+
+    @Override public void setSlot(String target, int slot, String item) {
+        for (Player p : players(target)) {
+            int idx = Math.max(0, Math.min(35, slot - 1));
+            p.getInventory().setItem(idx, make(item));
+        }
+    }
+    @Override public void swapHands(String target) {
+        for (Player p : players(target)) {
+            ItemStack m = p.getInventory().getItemInMainHand();
+            p.getInventory().setItemInMainHand(p.getInventory().getItemInOffHand());
+            p.getInventory().setItemInOffHand(m);
+        }
+    }
+    @Override public void clearInventory(String target) {
+        for (Player p : players(target)) p.getInventory().clear();
+    }
+    @Override public void setItemAmount(String target, String item, int amount) {
+        for (Player p : players(target))
+            for (ItemStack s : p.getInventory().getContents()) {
+                if (s != null && s.getType().name().equalsIgnoreCase(item.replace(' ', '_'))) {
+                    s.setAmount(Math.max(1, amount));
+                    return;
+                }
+            }
+    }
+    @Override public void setItemUnbreakable(String target, String item, boolean unbreakable) {
+        for (Player p : players(target))
+            for (ItemStack s : p.getInventory().getContents()) {
+                if (s != null && s.getType().name().equalsIgnoreCase(item.replace(' ', '_'))) {
+                    org.bukkit.inventory.meta.ItemMeta m = s.getItemMeta();
+                    if (m == null) continue;
+                    m.setUnbreakable(unbreakable);
+                    s.setItemMeta(m);
+                    return;
+                }
+            }
+    }
+    @Override public void setSkullOwner(String target, String item, String owner) {
+        for (Player p : players(target))
+            for (ItemStack s : p.getInventory().getContents()) {
+                Material mat = Material.matchMaterial(item.replace(' ', '_').toUpperCase());
+                if (s == null) continue;
+                if (mat != null && s.getType() == mat && s.getItemMeta() instanceof org.bukkit.inventory.meta.SkullMeta sm) {
+                    sm.setOwningPlayer(Bukkit.getOfflinePlayer(owner));
+                    s.setItemMeta(sm);
+                    return;
+                }
+            }
+    }
+
+    // ---- player tuning ------------------------------------------------------------
+
+    @Override public void setFlySpeed(String target, double speed) {
+        for (Player p : players(target)) p.setFlySpeed((float) Math.max(0, Math.min(1, speed / 40)));
+    }
+    @Override public void setAttackSpeed(String target, double speed) {
+        for (Player p : players(target)) {
+            var attr = p.getAttribute(org.bukkit.attribute.Attribute.ATTACK_SPEED);
+            if (attr != null) attr.setBaseValue(Math.max(0, speed));
+        }
+    }
+    @Override public void setSaturation(String target, double value) {
+        for (Player p : players(target)) p.setSaturation((float) Math.max(0, value));
+    }
+    @Override public void setAir(String target, int ticks) {
+        for (Player p : players(target)) p.setRemainingAir(Math.max(0, ticks));
+    }
+    @Override public void setFlying(String target, boolean flying) {
+        for (Player p : players(target)) { p.setAllowFlight(true); p.setFlying(flying); }
+    }
+    @Override public void setGliding(String target, boolean gliding) {
+        for (Player p : players(target)) p.setGliding(gliding);
+    }
+    @Override public void setArmorSlot(String target, String armor, String piece) {
+        Material mat = Material.matchMaterial(armor.replace(' ', '_').toUpperCase());
+        if (mat == null) return;
+        ItemStack s = new ItemStack(mat);
+        for (Player p : players(target)) {
+            String ps = piece.toLowerCase();
+            if (ps.contains("helmet") || ps.contains("head")) p.getInventory().setHelmet(s);
+            else if (ps.contains("chest") || ps.contains("plate")) p.getInventory().setChestplate(s);
+            else if (ps.contains("leg")) p.getInventory().setLeggings(s);
+            else if (ps.contains("boot") || ps.contains("feet")) p.getInventory().setBoots(s);
+            else if (ps.contains("off")) p.getInventory().setItemInOffHand(s);
+        }
+    }
+    @Override public void setDisplayName(String target, String name) {
+        for (Player p : players(target)) p.setDisplayName(name);
+    }
+    @Override public void setPlayerListName(String target, String name) {
+        for (Player p : players(target)) p.setPlayerListName(name);
+    }
+@Override public void setGlowColor(String target, String color) {
+        for (Player p : players(target)) {
+            try {
+                org.bukkit.ChatColor c = org.bukkit.ChatColor.valueOf(color.toUpperCase().replace(' ', '_'));
+                p.setGlowing(true);
+                org.bukkit.scoreboard.Scoreboard sb = p.getScoreboard();
+                org.bukkit.scoreboard.Team team = sb.getEntryTeam(p.getName());
+                if (team == null) {
+                    String teamName = "vg" + Integer.toHexString(p.getName().hashCode());
+                    if (teamName.length() > 16) teamName = teamName.substring(0, 16);
+                    team = sb.getTeam(teamName);
+                    if (team == null) {
+                        try { team = sb.registerNewTeam(teamName); } catch (IllegalArgumentException ignored) { }
+                    }
+                    if (team == null) continue;
+                    team.addEntry(p.getName());
+                }
+                team.setColor(c);
+            } catch (IllegalArgumentException ignored) { }
+        }
+    }
+    @Override public void setRespawnPoint(String target) {
+        for (Player p : players(target)) p.setBedSpawnLocation(p.getLocation(), true);
+    }
+    @Override public void launch(String target, double power) {
+        double v = Math.max(0, Math.min(10, power));
+        for (Player p : players(target))
+            p.setVelocity(p.getVelocity().setY(v / 2).add(new org.bukkit.util.Vector(0, 0.6, 0)));
+    }
+    @Override public void removeAllEffects(String target) {
+        for (Player p : players(target)) p.getActivePotionEffects().forEach(e -> p.removePotionEffect(e.getType()));
+    }
+
+    // ---- world effects ------------------------------------------------------------
+
+    @Override public void dropExperience(Location at, int amount) {
+        World w = Bukkit.getWorld(at.world());
+        if (w != null && amount > 0) w.spawn(new org.bukkit.Location(w, at.x(), at.y(), at.z()), org.bukkit.entity.ExperienceOrb.class).setExperience(amount);
+    }
+    @Override public void dropItemAt(Location at, String item, int count) {
+        World w = Bukkit.getWorld(at.world());
+        Material m = Material.matchMaterial(item.replace(' ', '_').toUpperCase());
+        if (w != null && m != null) w.dropItemNaturally(new org.bukkit.Location(w, at.x(), at.y(), at.z()), new ItemStack(m, Math.max(1, count)));
+    }
+    @Override public void lightningAt(Location at) {
+        World w = Bukkit.getWorld(at.world());
+        if (w != null) w.strikeLightningEffect(new org.bukkit.Location(w, at.x(), at.y(), at.z()));
+    }
+    @Override public void playSoundAt(Location at, String sound) {
+        World w = Bukkit.getWorld(at.world());
+        try {
+            Sound s = Sound.valueOf(sound.replace(' ', '_').toUpperCase());
+            if (w != null) w.playSound(new org.bukkit.Location(w, at.x(), at.y(), at.z()), s, 1, 1);
+        } catch (IllegalArgumentException ignored) { }
+    }
+    @Override public void stopAllSounds(String target) {
+        for (Player p : players(target)) p.stopAllSounds();
+    }
+    @Override public void playMusicDisc(String target, String disc) {
+        Material m = Material.matchMaterial(disc.replace(' ', '_').toUpperCase());
+        if (m != null && m.isRecord()) for (Player p : players(target)) p.playSound(p.getLocation(), m.getKey().toString(), 1, 1);
+    }
+    @Override public void fillRegion(Location a, Location b, String block) {
+        World w = Bukkit.getWorld(a.world());
+        Material m = Material.matchMaterial(block.replace(' ', '_').toUpperCase());
+        if (w == null || m == null) return;
+        int x1 = (int) Math.min(a.x(), b.x()), x2 = (int) Math.max(a.x(), b.x());
+        int y1 = (int) Math.min(a.y(), b.y()), y2 = (int) Math.max(a.y(), b.y());
+        int z1 = (int) Math.min(a.z(), b.z()), z2 = (int) Math.max(a.z(), b.z());
+        for (int x = x1; x <= x2; x++) for (int y = y1; y <= y2; y++) for (int z = z1; z <= z2; z++)
+            w.getBlockAt(x, y, z).setType(m);
+    }
+    @Override public void giveRandomItem(String target) {
+        Material[] pool = {Material.DIAMOND, Material.EMERALD, Material.GOLD_INGOT, Material.IRON_INGOT,
+                Material.APPLE, Material.BREAD, Material.OAK_PLANKS, Material.ARROW, Material.STICK};
+        ItemStack item = new ItemStack(pool[(int) (Math.random() * pool.length)]);
+        for (Player p : players(target)) p.getInventory().addItem(item);
+    }
 }

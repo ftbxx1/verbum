@@ -494,6 +494,12 @@ public final class Conditions {
             return new Situation("consume", i >= 0 && i + 1 < words.size() ? join(words.subList(i + 1, words.size())) : null);
         }
 
+        // --- projectiles (checked before generic  hits a / strikes  combat rules) ---
+        if (s.contains("a projectile hits") || s.contains("his projectile hits")
+                || s.contains("the projectile hits") || s.contains("projectile hits")) {
+            return new Situation("projectilehit", null);
+        }
+
         // --- combat ---------------------------------------------------------------
         if (s.contains("boss dies") || s.contains("boss death")) return new Situation("boss death", null);
         if (s.contains("boss spawn")) return new Situation("boss spawn", null);
@@ -573,6 +579,40 @@ public final class Conditions {
         if (s.contains("consumes") || s.contains("drinks a potion")) return new Situation("consume", null);
         if (s.contains("burns to death") || s.contains("burnt to death")) return new Situation("fire", null);
         if (s.contains("drowns")) return new Situation("drown", null);
+
+        // --- expansion batch: equipment, animals, crafting, raiding -----------------
+        if (s.contains("swaps hands") || s.contains("switches his hands")) return new Situation("swap", null);
+        if (s.contains("empties a bucket") || s.contains("pours out a bucket") || s.contains("pours a bucket")) return new Situation("bucketempty", null);
+        if (s.contains("fills a bucket") || s.contains("collects water in a bucket")) return new Situation("bucketfill", null);
+        if (s.contains("damages an item") || s.contains("damages his item") || s.contains("wears out an item")) return new Situation("itemdamage", null);
+        if (s.contains("breaks a tool") || s.contains("breaks his tool") || s.contains("breaks an item")
+                || s.contains("breaks a sword") || s.contains("breaks a pickaxe") || s.contains("breaks an axe")) return new Situation("itembreak", null);
+        if (s.contains("clicks in a inventory") || s.contains("clicks in his inventory") || s.contains("clicks a slot")) return new Situation("inventoryclick", null);
+        if (s.contains("a piston extends") || s.contains("a piston pushes")) return new Situation("piston", null);
+        if (s.contains("a piston retracts") || s.contains("a piston pulls")) return new Situation("pistonretract", null);
+        if (s.contains("plays a note") || s.contains("plays a music note") || s.contains("a note plays")
+                || s.contains("plays the noteblock")) return new Situation("note", null);
+        if (s.contains("starts a raid") || s.contains("triggers a raid") || s.contains("a raid starts")) return new Situation("raid", null);
+        if (s.contains("finishes a raid") || s.contains("wins a raid") || s.contains("a raid finishes")
+                || s.contains("a raid ends")) return new Situation("raidwin", null);
+        if (s.contains("changes gamemode") || s.contains("changes game mode") || s.contains("switches gamemode")) return new Situation("gamemodechange", null);
+        if (s.contains("changes worlds") || s.contains("travels between worlds") || s.contains("changes world")) return new Situation("worldchange", null);
+        if (s.contains("breeds") || s.contains("breeds animals")) return new Situation("breed", null);
+        if (s.contains("tames") || s.contains("tames a pet") || s.contains("tames an animal")) return new Situation("tame", null);
+        if (s.contains("gets an advancement") || s.contains("earns an advancement")
+                || s.contains("achieves an advancement") || s.contains("completes an advancement")) return new Situation("advancement", null);
+        if (s.contains("uses a totem") || s.contains("pops a totem") || s.contains("his totem activates")) return new Situation("totem", null);
+        if (s.contains("edits a book") || s.contains("writes in a book") || s.contains("writes a book")) return new Situation("bookedit", null);
+        if (s.contains("edits an armor stand") || s.contains("turns an armor stand") || s.contains("modifies an armor stand")) return new Situation("armorstand", null);
+        if (s.contains("starts crafting") || s.contains("begins crafting")) return new Situation("craftstart", null);
+        if (s.contains("smiths") || s.contains("smiths an item")) return new Situation("smith", null);
+        if (s.contains("a furnace smelts") || s.contains("an item smelts") || s.contains("food cooks in a furnace")) return new Situation("smelt", null);
+        if (s.contains("changes his armor") || s.contains("changes armor") || s.contains("puts on armor")
+                || s.contains("equips armor") || s.contains("takes off armor")) return new Situation("armorchange", null);
+        if (s.contains("gets withered")) return new Situation("wither", null);
+        if (s.contains("throws an egg") || s.contains("throws eggs")) return new Situation("eggthrow", null);
+        if (s.contains("buckets a fish") || s.contains("captures a fish in a bucket")) return new Situation("bucketcatch", null);
+        if (s.contains("burns")) return new Situation("burn", null);
 
         // --- inventory ---------------------------------------------------------------
         if (s.contains("picks up") || s.contains("pick up")) {
