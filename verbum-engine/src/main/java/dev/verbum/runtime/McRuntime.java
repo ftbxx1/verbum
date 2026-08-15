@@ -209,6 +209,8 @@ public interface McRuntime {
     boolean isStorm();
     int onlinePlayers();
     boolean playerOnline(String name);
+    /** Names of players currently online, used to drive condition-style  when  handlers. */
+    default java.util.List<String> onlinePlayerNames() { return java.util.List.of(); }
     double coord(String target, char axis);          // 'x', 'y' or 'z'
     String dimension(String target);
     String biome(String target);

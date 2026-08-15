@@ -9,8 +9,11 @@ import java.util.Map;
  * An in-memory fake Minecraft world used for offline tests and the acceptance
  * demo. It behaves like the real server for everything Verbum's examples need:
  * inventories, health, positions, areas, weather, time and spawning.
+ *
+ * Not final so tests and add-ons can subclass it and override a handful of
+ * behaviours (e.g. {code onlinePlayerNames} to emulate a live player list).
  */
-public final class MockMcRuntime implements McRuntime {
+public class MockMcRuntime implements McRuntime {
 
     /** A named rectangular area (used for "reaches area" / "is in"). */
     public static final class Area {
@@ -381,6 +384,10 @@ public final class MockMcRuntime implements McRuntime {
     @Override public boolean isStorm() { return weather.equalsIgnoreCase("storm"); }
     @Override public int onlinePlayers() { return (int) players.values().stream().filter(p -> p.online).count(); }
     @Override public boolean playerOnline(String name) { MockPlayer p = players.get(normalize(name)); return p != null && p.online; }
+
+    @Override public java.util.List<String> onlinePlayerNames() {
+        return players.values().stream().filter(p -> p.online).map(p -> p.name).toList();
+    }
     @Override public double coord(String target, char axis) {
         MockPlayer p = player(target);
         return switch (axis) { case 'x' -> p.loc.x(); case 'y' -> p.loc.y(); default -> p.loc.z(); };

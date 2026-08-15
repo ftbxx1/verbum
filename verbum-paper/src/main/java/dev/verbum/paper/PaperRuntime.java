@@ -37,6 +37,11 @@ public final class PaperRuntime implements McRuntime {
 
     ScriptEngine engine() { return plugin.engine(); }
 
+    /** Condition-style  when  handlers need every live player each tick. */
+    @Override public java.util.List<String> onlinePlayerNames() {
+        return Bukkit.getOnlinePlayers().stream().map(Player::getName).toList();
+    }
+
     public static final class Region {
         final String name;
         final org.bukkit.Location a, b;

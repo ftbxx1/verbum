@@ -411,11 +411,7 @@ public final class Interpreter {
     }
 
     private List<String> onlinePlayerNames() {
-        List<String> out = new ArrayList<>();
-        if (runtime instanceof dev.verbum.runtime.MockMcRuntime mock) {
-            for (var e : mock.players.entrySet()) if (e.getValue().online) out.add(e.getKey());
-        }
-        return out;
+        return runtime.onlinePlayerNames();
     }
 
     // ------------------------------------------------------------- blocks

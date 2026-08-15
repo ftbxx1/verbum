@@ -1,134 +1,553 @@
-# Verbum — command reference
+﻿# Verbum - command reference
 
-Every Verbum verb, what it does, and an example. Words in *italics* are things
-you fill in.
+Generated from the interpreter source so it always matches what the server
+actually understands. Verbs are the first word of a line inside a block.
+
+> **261 verbs, 113 event words, 102 language keyword fallbacks.**
 
 ## Trigger words (start a block)
 
-| Trigger            | Meaning                              |
-|--------------------|--------------------------------------|
+| Trigger | Meaning |
+|---------|---------|
 | `when <condition>` | run the block when the situation happens |
-| `every <n> seconds\|minutes\|hours` | run the block on a clock |
-| `on server start`  | run once when the server starts      |
-| `on server stop`   | run once when the server stops       |
-| `action <name> ...`| define a reusable action             |
+| `every <n> seconds|minutes|hours` | run the block on a clock |
+| `on server start` / `on server stop` | run once when the server starts/stops |
+| `action <name> <params>` | define a reusable action (function) |
+| `command <name>` | define a custom chat command, e.g. `/hello` |
+| `menu <name>` | define a clickable inventory menu |
 
-## Chat and messages
 
-| Command | Meaning | Example |
-|---------|---------|---------|
-| `tell` | private message | `tell player Welcome` |
-| `warn` | red warning   | `warn player Low health` |
-| `announce` | message to everyone | `announce New day` |
-| `title` | big centred text | `title player with FIGHT` |
-| `toast` | toast notification | `toast player Nice` |
-| `welcome` | join greeting | `welcome player with Hello` |
+## Variables & math
 
-## Items and inventory
+| Verb | You can also write |
+|------|--------------------------|
+| `add` |  |
+| `call` |  |
+| `cooldown` |  |
+| `decrease` |  |
+| `divide` |  |
+| `increase` |  |
+| `let` |  |
+| `load` |  |
+| `lore` |  |
+| `modeldata` |  |
+| `multiply` |  |
+| `remove` |  |
+| `rename` |  |
+| `save` |  |
+| `set` |  |
 
-| Command | Meaning | Example |
-|---------|---------|---------|
-| `give` | add items | `give player 5 diamonds` |
-| `take` | remove items | `take 1 emerald from player` |
-| `clear` | remove all of an item | `clear player's stick` |
+## Messages
 
-## Life and body
+| Verb | You can also write |
+|------|--------------------------|
+| `actionbar` |  |
+| `announce` |  |
+| `broadcast` |  |
+| `clearchat` |  |
+| `disableprivatechat` |  |
+| `disablepublicchat` | `hidechat` |
+| `message` |  |
+| `say` |  |
+| `sendclickmessage` |  |
+| `sendhovermessage` |  |
+| `setjoinmessage` |  |
+| `setprivatechat` |  |
+| `setpublicchat` |  |
+| `setquitmessage` |  |
+| `tell` |  |
+| `title` |  |
+| `toast` |  |
+| `warn` |  |
+| `welcome` |  |
 
-| Command | Meaning | Example |
-|---------|---------|---------|
-| `kill` | set health to zero | `kill player` |
-| `damage` | hurt | `damage player by 10` |
-| `heal` | restore some health | `heal player by 5` |
-| `heal to full` | restore all health/hunger | `heal player to full` |
-| `ignite` | set on fire | `ignite player for 5 seconds` |
-| `freeze` | freeze | `freeze player` |
+## Inventory
+
+| Verb | You can also write |
+|------|--------------------------|
+| `clear` |  |
+| `drop` |  |
+| `give` |  |
+
+## Life
+
+| Verb | You can also write |
+|------|--------------------------|
+| `damage` |  |
+| `heal` |  |
+| `kill` |  |
 
 ## Movement
 
-| Command | Meaning | Example |
-|---------|---------|---------|
-| `teleport ... to` | move a player | `teleport player to home` |
-| `set fly` | allow flying | `set fly player` |
-| `set walk speed` | change speed | `set walk speed player 30` |
+| Verb | You can also write |
+|------|--------------------------|
+| `teleport` |  |
 
-## World
+## World/state
 
-| Command | Meaning | Example |
-|---------|---------|---------|
-| `set weather` | rain/sun/storm | `set weather to rain` |
-| `set time` | day/night/noon/midnight | `set time to night` |
-| `set block` | place a block | `set block stone at 10 64 10` |
-| `break block` | remove a block | `break block at 10 64 10` |
-| `play sound` | play a sound | `play sound player level up` |
-| `play particle` | show particles | `play particle player heart` |
-| `lightning` | lightning bolt | `lightning at player` |
+| Verb | You can also write |
+|------|--------------------------|
+| `apply` |  |
+| `despawn` |  |
+| `effect` |  |
+| `enchant` |  |
+| `explode` |  |
+| `feed` |  |
+| `freeze` |  |
+| `ignite` |  |
+| `lightning` |  |
+| `particle` |  |
+| `playsound` |  |
+| `setblock` |  |
+| `smite` |  |
+| `spawn` | `spawnmob` |
+| `strike` | `lightning`, `thunder` |
+| `time` |  |
+| `unenchant` |  |
+| `weather` |  |
 
-## Creatures
+## Doors / game
 
-| Command | Meaning | Example |
-|---------|---------|---------|
-| `spawn` | create mobs | `spawn zombie` or `spawn 5 zombies` |
-| `despawn` | remove mobs | `despawn zombie` |
-| `set mob health` | change mob health | `set mob health boss to 200` |
-| `set mob speed` | change mob speed | `set mob speed boss to 0.5` |
-| `give effect` | potion effect | `give player night vision for 30 seconds` |
-| `enchant` | enchant an item | `enchant player's sword with sharpness level 3` |
+| Verb | You can also write |
+|------|--------------------------|
+| `close` |  |
+| `lose` |  |
+| `open` |  |
+| `win` |  |
 
-## Doors, gates, game
+## Economy
 
-| Command | Meaning | Example |
-|---------|---------|---------|
-| `open door` | open a door | `open trading door` |
-| `close door` | close a door | `close trading door` |
-| `open gate` / `close gate` | gates | `open castle gate` |
-| `win game` | declare a winner | `win game` |
-| `lose game` | declare a loser | `lose game` |
-| `give XP` | experience | `give player 100 XP` |
-| `give levels` | levels | `give levels player 1` |
-| `set gamemode` | change mode | `set gamemode player to creative` |
+| Verb | You can also write |
+|------|--------------------------|
+| `balance` |  |
+| `charge` |  |
+| `deposit` |  |
+| `pay` |  |
+| `withdraw` |  |
 
-## Server administration
+## Admin
 
-| Command | Meaning | Example |
-|---------|---------|---------|
-| `ban` | ban a player | `ban player` |
-| `kick` | kick a player | `kick player bye` |
-| `give permission` | grant permission | `give permission player verbum.fly` |
-| `remove permission` | revoke permission | `remove permission player verbum.fly` |
+| Verb | You can also write |
+|------|--------------------------|
+| `ban` |  |
+| `cancel` |  |
+| `cancelfalldamage` |  |
+| `deop` |  |
+| `gamemode` |  |
+| `givepermission` |  |
+| `glowing` |  |
+| `gravity` |  |
+| `hide` |  |
+| `invisible` |  |
+| `kick` |  |
+| `make` |  |
+| `makesneak` |  |
+| `makesprint` |  |
+| `mute` |  |
+| `op` |  |
+| `removepermission` |  |
+| `reset` |  |
+| `setabsorption` |  |
+| `setarmor` |  |
+| `setarmorpoints` |  |
+| `setcooldown` |  |
+| `setfly` | `fly` |
+| `setinvincible` |  |
+| `setmobhealth` |  |
+| `setmobspeed` |  |
+| `setsneaking` |  |
+| `setsprinting` |  |
+| `setwalkspeed` |  |
+| `show` |  |
+| `unvanish` |  |
+| `vanish` |  |
+| `visible` |  |
 
-## Variables
+## Inventory & slots
 
-| Command | Meaning | Example |
-|---------|---------|---------|
-| `set ... to` | set a value | `set player's coins to 100` |
-| `add ... to` | add to a value | `add 10 to player's coins` |
-| `remove ... from` | subtract | `remove 5 from player's coins` |
-| `multiply ... by` | multiply | `multiply player's coins by 2` |
-| `divide ... by` | divide | `divide player's coins by 4` |
-| `increase ... by` | +1 by default | `increase player's coins by 1` |
-| `decrease ... by` | -1 by default | `decrease player's coins by 1` |
-| `save ... to database` | keep forever | `save player's coins to database` |
-| `load ...` | bring back | `load player's coins` |
-| `after N seconds:` | run this block later | `after 5 seconds` then a block |
-| `cancel event` | stop later event handlers | `cancel event` |
-| `priority high/low` | event handler order | `when player joins priority high` |
+| Verb | You can also write |
+|------|--------------------------|
+| `put` |  |
+| `setitemamount` |  |
+| `setskullowner` |  |
+| `setslot` |  |
+| `setunbreakable` |  |
+| `swap` |  |
+
+## Player tuning
+
+| Verb | You can also write |
+|------|--------------------------|
+| `cleareffects` |  |
+| `feedfull` |  |
+| `fullheal` |  |
+| `launch` |  |
+| `setarmorslot` |  |
+| `setattackspeed` |  |
+| `setdisplayname` |  |
+| `setflying` |  |
+| `setfoodlevel` |  |
+| `setgliding` |  |
+| `setglowcolor` |  |
+| `setlistname` |  |
+| `setrespawn` |  |
+| `settablistheader` |  |
+| `unfreeze` |  |
+
+## Broadcasts
+
+| Verb | You can also write |
+|------|--------------------------|
+| `broadcastactionbar` |  |
+| `broadcastsound` |  |
+| `broadcasttitle` |  |
+| `broadcasttoast` |  |
+| `musicdisc` |  |
+| `stopsounds` |  |
+
+## World effects (coordinate based)
+
+| Verb | You can also write |
+|------|--------------------------|
+| `dropat` |  |
+| `dropexperience` |  |
+| `fill` |  |
+| `lightningat` |  |
+| `playsoundat` |  |
+| `randomitem` |  |
+
+## Xp / levels
+
+| Verb | You can also write |
+|------|--------------------------|
+| `experience` |  |
+| `levels` |  |
 
 ## Regions
 
-| Command | Meaning | Example |
-|---------|---------|---------|
-| `define area <name> <x1> <z1> <x2> <z2>` | mark an area | `define area Castle 0 0 100 100` |
-| `define area <name> <x1> <y1> <z1> <x2> <y2> <z2>` | 3D area | `define area Boss Room 300 0 300 350 200 350` |
+| Verb | You can also write |
+|------|--------------------------|
+| `define` |  |
+
+## Scoreboards
+
+| Verb | You can also write |
+|------|--------------------------|
+| `addscore` |  |
+| `createscoreboard` |  |
+| `deletescoreboard` |  |
+| `removescore` |  |
+| `setscore` |  |
+| `setscoreboarddisplay` |  |
+
+## Teams
+
+| Verb | You can also write |
+|------|--------------------------|
+| `addtoteam` |  |
+| `createteam` |  |
+| `removefromteam` |  |
+| `setteamcolor` |  |
+| `setteamprefix` |  |
+| `setteamsuffix` |  |
+
+## Boss bars
+
+| Verb | You can also write |
+|------|--------------------------|
+| `createbossbar` |  |
+| `hidebossbar` |  |
+| `removebossbar` |  |
+| `setbossbar` |  |
+| `setbossbarcolor` |  |
+| `setbossbarprogress` |  |
+| `setbossbarstyle` |  |
+| `showbossbar` |  |
+
+## World extras
+
+| Verb | You can also write |
+|------|--------------------------|
+| `setborder` |  |
+| `setdifficulty` |  |
+| `setexplosiondamage` |  |
+| `setmoblimit` |  |
+| `setplayerlimit` |  |
+| `setredstone` |  |
+| `setspawnpoint` |  |
+| `setstorm` |  |
+| `setthunder` |  |
+| `settimespeed` |  |
+| `setweatherduration` |  |
+| `setworldrule` |  |
+| `spawnstructure` |  |
+
+## Item & armor
+
+| Verb | You can also write |
+|------|--------------------------|
+| `clearinventory` |  |
+| `givearmor` |  |
+| `givehelmet` |  |
+| `renameitem` |  |
+| `sethelditem` |  |
+| `setitemflag` |  |
+| `setlore` |  |
+| `setmodeldata` |  |
+| `setoffhanditem` |  |
+
+## Guis
+
+| Verb | You can also write |
+|------|--------------------------|
+| `openanvil` |  |
+| `openinventory` |  |
+| `openmenu` |  |
+| `openshop` |  |
+| `openworkbench` |  |
+
+## Projectiles
+
+| Verb | You can also write |
+|------|--------------------------|
+| `adddeath` |  |
+| `addkill` |  |
+| `shoot` |  |
+| `shootcoloredfirework` |  |
+| `shootfirework` |  |
+| `throw` |  |
+
+## Mob extras
+
+| Verb | You can also write |
+|------|--------------------------|
+| `makemob` |  |
+| `namemob` |  |
+| `setmobage` |  |
+| `setmobai` |  |
+| `setmobbreeding` |  |
+| `setmobdrop` |  |
+| `setmobflying` |  |
+| `setmobfollow` |  |
+| `setmobgravity` |  |
+| `setmobnamevisible` |  |
+| `setmobpersistent` |  |
+| `setmobpitch` |  |
+| `setmobsize` |  |
+| `setmobtarget` |  |
+| `tamemob` |  |
+
+## Server extras
+
+| Verb | You can also write |
+|------|--------------------------|
+| `revive` |  |
+| `sendtolobby` |  |
+| `sendtoserver` |  |
+| `setclickcommand` |  |
+| `setmute` |  |
+| `setsigntext` |  |
+| `settablist` |  |
+| `unban` |  |
+| `unmute` |  |
+
+## Flags & quests
+
+| Verb | You can also write |
+|------|--------------------------|
+| `completequest` |  |
+| `setflag` |  |
+| `setquest` |  |
+| `toggleflag` |  |
+
+## Game flow
+
+| Verb | You can also write |
+|------|--------------------------|
+| `endgame` |  |
+| `nextround` |  |
+| `setround` |  |
+| `startgame` |  |
+
+## More phrasal verbs
+
+| Verb | You can also write |
+|------|--------------------------|
+| `breakblock` |  |
+| `buy` |  |
+| `closedoor` |  |
+| `closegate` |  |
+| `closetrapdoor` |  |
+| `executecommand` |  |
+| `extinguish` |  |
+| `givelevels` |  |
+| `givexp` |  |
+| `healtofull` |  |
+| `makeplayer` |  |
+| `opendoor` |  |
+| `opengate` |  |
+| `opentrapdoor` |  |
+| `removeeffect` |  |
+| `sell` |  |
+| `setflyspeed` |  |
+| `setfood` |  |
+| `setfrozen` |  |
+| `setgamemode` |  |
+| `setglowing` |  |
+| `setgravity` |  |
+| `sethealth` |  |
+| `setinvisible` |  |
+| `setinvulnerable` |  |
+| `setitem` |  |
+| `setitemflags` |  |
+| `setlevel` |  |
+| `setmaxhealth` |  |
+| `setmobhostility` |  |
+| `setmoney` |  |
+| `setop` |  |
+| `setshopprice` |  |
+| `setsidebarline` |  |
+| `setsidebartitle` |  |
+| `setvillagerprice` |  |
+| `setvisible` |  |
+| `strikelightning` |  |
+| `subtitle` |  |
+
+## Event words (what `when player ...` understands)
+
+These are the situations `when` can react to, written as plain words:
+
+| Kind | Example phrase |
+|------|----------------|
+| `advancement` | when player gets an advancement |
+| `armorchange` | when player changes armor |
+| `armorstand` | when player edits an armor stand |
+| `arrow` | when player gets shot |
+| `ban` | when player gets banned |
+| `block` | when player blocks an attack |
+| `bookedit` | when player edits a book |
+| `break` | when player breaks diamond ore |
+| `breed` | when player breeds animals |
+| `brew` | when player brews a potion |
+| `bucketcatch` | when player captures a fish |
+| `bucketempty` | when player empties a bucket |
+| `bucketfill` | when player fills a bucket |
+| `burn` | when player burns |
+| `button` | when player presses a button |
+| `chat` | when player chats / says / types |
+| `close` | when player closes a door |
+| `collect` | when player collects emerald |
+| `command` | when player uses command |
+| `complete` | when player completes a quest |
+| `consume` | when player drinks a potion |
+| `craft` | when player crafts an item |
+| `craftstart` | when player starts crafting |
+| `damage` | when player damages a mob |
+| `day` | when player day starts |
+| `death` | when player dies / gets killed by |
+| `dismount` | when player dismounts |
+| `drop` | when player drops an item |
+| `drown` | when player drowns |
+| `eat` | when player eats food |
+| `eggthrow` | when player throws an egg |
+| `enchant` | when player enchants a sword |
+| `enter` | when player enters area |
+| `explosion` | when player a creeper explodes |
+| `fall` | when player takes fall damage |
+| `fire` | when player burns to death |
+| `firstjoin` | when player first joins |
+| `fish` | when player fishes |
+| `freeze` | when player gets frozen |
+| `gamemodechange` | when player changes gamemode |
+| `harvest` | when player harvests crops |
+| `heal` | when player heals / regains health |
+| `hit` | when player hits a zombie |
+| `hurt` | when player gets hurt / takes damage |
+| `ignite` | when player catches fire |
+| `inventoryclick` | when player clicks a slot |
+| `invopen` | when player opens his inventory |
+| `itembreak` | when player breaks a tool |
+| `itemdamage` | when player damages an item |
+| `join` | when player joins |
+| `jump` | when player jumps |
+| `kick` | when player gets kicked |
+| `kill` | when player kills a mob |
+| `land` | when player lands |
+| `leave` | when player leaves area |
+| `leftclick` | when player left clicks |
+| `levelup` | when player levels up |
+| `lever` | when player flips a lever |
+| `lightning` | when player is struck by lightning |
+| `lose` | when player loses game |
+| `middleclick` | when player middle clicks |
+| `milk` | when player milks a cow |
+| `move` | when player moves to / steps on |
+| `night` | when player night starts |
+| `note` | when player plays a note |
+| `open` | when player opens a chest |
+| `pickup` | when player picks up a diamond |
+| `piston` | when player a piston extends |
+| `pistonretract` | when player a piston retracts |
+| `place` | when player places a block |
+| `plant` | when player plants a seed |
+| `poison` | when player gets poisoned |
+| `portal` | when player enters a portal |
+| `portalexit` | when player exits a portal |
+| `prime` | when player primes a tnt |
+| `projectilehit` | when player a projectile hits |
+| `quit` | when player quits |
+| `raid` | when player starts a raid |
+| `raidwin` | when player wins a raid |
+| `rainstart` | when player it starts raining |
+| `reach` | when player reaches area |
+| `respawn` | when player respawns |
+| `ride` | when player rides a horse |
+| `rightclick` | when player right clicks |
+| `shear` | when player shears a sheep |
+| `shoot` | when player shoots a bow |
+| `sleep` | when player goes to bed |
+| `smelt` | when player a furnace smelts |
+| `smith` | when player smiths an item |
+| `sneak` | when player starts sneaking |
+| `sprint` | when player starts sprinting |
+| `start` | when player starts playing |
+| `starve` | when player starves |
+| `stormstart` | when player storm starts |
+| `swap` | when player swaps hands |
+| `swim` | when player starts swimming |
+| `switch` | when player switches slot |
+| `tame` | when player tames a pet |
+| `teleport` | when player teleports to |
+| `thunder` | when player thunder strikes |
+| `toggleflight` | when player toggles flying |
+| `togglesneak` | when player toggles sneak |
+| `totem` | when player uses a totem |
+| `trade` | when player trades with villager |
+| `unsneak` | when player stops sneaking |
+| `unsprint` | when player stops sprinting |
+| `use` | when player uses an item |
+| `void` | when player falls into void |
+| `wake` | when player wakes up |
+| `win` | when player wins game |
+| `wither` | when player gets withered |
+| `worldchange` | when player changes worlds |
+| `xp` | when player gains experience |
 
 ## Flow control
 
 | Word | Meaning |
 |------|---------|
-| `if ... else if ... else` | choose a branch |
+| `if ...` `else if ...` `else` | choose a branch |
 | `repeat <n> times` | loop a set number |
-| `repeat while <condition>` | loop while true |
-| `until <condition>` | loop until true |
-| `for each X in LIST` | loop over things |
+| `repeat while <cond>` / `until <cond>` | loop while/until true |
+| `for each <x> in <list>` | loop over a list |
 | `break` | stop this loop |
 | `continue` | next turn of this loop |
-| `stop` | stop everything now |
+| `stop` | stop the whole handler |
+| `wait`, `after <n> seconds:` | pause and run later |
+| `cancel event` | stop later handlers for this event |
+| `priority high` / `priority low` | event handler order |
+
+---
+
+Lines that start with `note` or `#` are comments and are ignored.

@@ -180,7 +180,7 @@ public final class VerbumCli {
                 Usage:
                   check  <file> [ -lang <code> ]   check a .vb / .mcscript file for problems
                   run    <file> [ -lang <code> ]   load and run a small demo scenario
-                  languages                        list the 100 supported keyword languages
+                  languages                        list the 102 supported keyword languages
                   demo                             run the offline acceptance test
                   help                             show this help
 
