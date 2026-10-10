@@ -2,182 +2,315 @@
 
 > **Tell Minecraft what to do — in English.**
 
-Verbum is an original, beginner-friendly **English scripting language** for
-Minecraft. No braces, no quotes, no plus signs. Just readable sentences and
-indentation. A fifth-grader can read a Verbum script and know instantly what it
-does.
+Verbum is a **beginner-friendly English scripting language** for Minecraft. Write Minecraft behavior in plain English sentences. No braces. No quotes. No syntax noise. A fifth-grader can read a Verbum script and instantly understand what it does.
 
-```
+## Quick Look
+
+```vb
 when player joins the world
     welcome player with Welcome to the server
 
-when player touches water
-    kill player
+when player breaks diamond ore
+    give player 5 diamonds
+
+if player has 5 kills
+    announce Big score!
+```
+
+**That's it.** No symbols. No operators. Just English.
+
+---
+
+## Why Verbum?
+
+Existing Minecraft scripting languages are either:
+- **Text-based code** (Skript, JavaScript, Python) — requires learning syntax, operators, and programming concepts.
+- **Visual programming** (Scratch, Blockly) — fun, but limited and slow to write at scale.
+
+**Verbum is different.** It's a real, grammar-based language that reads like a rulebook:
+
+| Feature | Value |
+|---------|-------|
+| **Language** | English (context-aware keywords) |
+| **File type** | `.vb` or `.mcscript` |
+| **Platform** | Paper (Bukkit-compatible server) + offline testing |
+| **Learn time** | Instant for English speakers |
+| **Scope** | Events → Conditions → Actions |
+
+---
+
+## What Can You Do?
+
+### Basics
+
+```vb
+when player joins the world
+    welcome player with Welcome
+    give player a diamond
+    teleport player to spawn
 
 when player breaks diamond ore
     give player 5 diamonds
+    announce [player] found diamonds!
 ```
 
-## Why Verbum is different
+### Conditions
 
-It is **not** "Minecraft Python" or "Minecraft JavaScript". It is a brand-new
-language with its own consistent grammar — a DAG of *events → conditions →
-actions*, all written as real words. Keywords like `give`, `kill`, `spawn` are
-words, never symbols.
+```vb
+when player right clicks
+    if player is in creative
+        announce You are in creative mode
+    
+    if player has a diamond sword
+        give player 64 emeralds
 
-| Identity | Value |
-|----------|-------|
-| Name     | **Verbum** |
-| File     | `.vb` (also `.mcscript`) |
-| Motto    | "Tell the game what to do." |
-| v1 platform | Paper (server plugin), with an offline mock world for testing |
-
-## What's in the box
-
-```
-verbum-engine/      The language core (pure Java, no Minecraft needed)
-  src/main/java/dev/verbum/
-    lex/            tokenizer
-    parser/         hand-written parser
-    ast/            syntax tree node definitions
-    interp/         interpreter, variables, conditions, actions, math
-    runtime/        McRuntime interface + MockMcRuntime (fake world)
-    engine/         ScriptEngine facade
-    cli/            VerbumCli (check / run / demo)
-  src/main/resources/scripts/
-    acceptance.vb   the end-to-end acceptance test
-    game.mcscript   the flagship example
-    examples/       14 more example scripts (events, menus, economy, pvp, quests ...)
-  src/test/java/    lexer, parser & interpreter unit tests
-  docs/             SPEC, GUIDE, COMMANDS
-verbum-paper/       The real Paper plugin (bridge to live Minecraft)
-  docs/INSTALL.md   install in 5 steps
-```
-
-## Architecture
-
-```
- .vb file
-   -> Tokenizer   split into words/numbers, keep indentation
-   -> Parser      hand-written -> AST
-   -> AST         events, actions, conditions, loops
-   -> Interpreter executes
-   -> McRuntime   the Minecraft bridge (interface)
-        |-- MockMcRuntime   offline fake world (tests + demo)
-        `-- PaperRuntime    real Paper server -> plugin -> Minecraft
-```
-
-## Quick start (offline)
-
-```
-mvn -pl verbum-engine -am package
-
-java -jar verbum-engine/target/verbum-engine-1.0.0.jar demo
-# -> ACCEPTANCE TEST: PASS
-```
-
-## The Big Library
-
-Beyond the basic *give / kill / teleport / announce* verbs, Verbum ships a large
-built-in library of Minecraft systems — scoreboards, teams, boss bars, quests,
-flags, mutes, gamemodes, dimensions, and body sensors — all spelled in plain
-sentences inside conditions and actions:
-
-```
 if score of kills is at least 8
-    announce Big score!
+    announce Wow!
+```
 
-set score for Alex in kills to 5
-add score for Alex in kills by 3
+### Teams, Scoreboards, Flags
+
+```vb
 create team red
 add Alex to team red
-create boss bar Wither with title The Wither
-set boss bar Wither's progress to 0.5
-set flag safe-zone to true
-
-set quest main to 3
-complete quest side-mission
+set score for Alex in kills to 5
+add score for Alex in kills by 1
+set flag pvp-enabled to true
 
 if player is in team red
-if player is muted
-if player is in the nether
-if player is swimming
+    announce Team red player detected
+```
+
+### Loops & Functions
+
+```vb
+command give_all
+    repeat 5 times
+        announce Broadcast message
+        wait 1 second
+
+command spawn_wave
+    for each player in everyone
+        spawn a zombie at [player]
+```
+
+### Complex Scripting
+
+```vb
+when player first joins
+    set quest main to 0
+    wait 5 seconds
+    send message Alex Please take the quest
+
+when player takes quest side-mission
+    set cooldown [player] teleport for 10 seconds
+    spawn 5 zombies at [player]
+    wait until [player] kills 5 mobs
+    complete quest side-mission
+    announce [player] won!
+```
+
+---
+
+## How It Works
+
+```
+📄 Your .vb script
+  ↓
+🔤 Tokenizer → split into words, preserve indentation
+  ↓
+📋 Parser → hand-written, builds syntax tree
+  ↓
+🌳 AST → events, actions, conditions, loops, functions
+  ↓
+▶️ Interpreter → executes the tree
+  ↓
+🎮 McRuntime → bridge to Minecraft
+    ├─ MockMcRuntime (for testing offline)
+    └─ PaperRuntime (real Paper server)
+```
+
+---
+
+## Getting Started
+
+### 1️⃣ Install on a Paper Server (3 steps)
+
+**Step 1:** Download the latest `.jar` from [Releases](https://github.com/ftbxx1/verbum/releases)
+
+**Step 2:** Drop it in your server's `plugins/` folder
+
+**Step 3:** Restart the server
+
+```bash
+/verbum reload  # Reload scripts anytime
+```
+
+### 2️⃣ Create Your First Script
+
+Create a file in `plugins/Verbum/scripts/hello.vb`:
+
+```vb
+when player joins the world
+    announce Welcome [player]!
+```
+
+Then:
+```bash
+/verbum reload
+```
+
+Watch the server welcome new players.
+
+### 3️⃣ Test Offline (No Server)
+
+```bash
+mvn -pl verbum-engine -am package
+java -jar verbum-engine/target/verbum-engine-1.0.0.jar demo
+```
+
+Runs the full acceptance test suite.
+
+---
+
+## The Language
+
+### Events (What triggers code)
+
+```vb
+when player joins the world
+when player breaks diamond ore
+when player right clicks
+when player gets damaged
+when player enters area spawn
+when it starts raining
+when day starts
+```
+
+### Conditions (If this, then...)
+
+```vb
 if player is in creative
-if it is noon
+if player has a diamond sword
+if player is in team red
+if score of kills is at least 5
+if it is night
+if player is sneaking
 ```
 
-The same verbs are both **conditions** (questions asked of the live world) and
-**actions** (changes to it), so a growing script reads like a natural-language
-rulebook rather than code.
+### Actions (Do this)
 
-Newer batch (chat, player state, world, mobs, systems):
+```vb
+# Messages
+announce Hello everyone
+tell player You are here
+send message [player] Click me
 
-```
-set join message to Welcome everyone
-send hover message Alex Hello with tooltip Click me
-send clickable text Alex Click with command /tp
-hide chat
+# Inventory
+give player a diamond sword
+take player 64 dirt
+clear inventory [player]
 
-set sneaking Alex        vanish Alex        set invincible Alex
-set cooldown Alex attack for 5 seconds
-set armor points Alex to 8
+# Gameplay
+kill [player]
+teleport [player] to spawn
+spawn 5 zombies
+set cooldown [player] attack for 5 seconds
 
-make storm               set weather duration 300
-set time speed 3         set player limit 20
-spawn structure castle at Spawn
-
-set mob ai zombie off    set mob follow zombie to Alex
-set mob drop zombie to diamond
-
-set sidebar title Welcome
-set sidebar line 1 to Hello
-
-when player enters a portal     when player gets damaged by a creeper
-when player consumes a potion
+# World
+set weather to rain
+set time to night
+set block at spawn to bedrock
 ```
 
-Round three (live stats, environment & gear, enchanted items, more events):
+### Control Flow
 
+```vb
+if condition
+    action
+    action
+else
+    action
+
+repeat 5 times
+    action
+
+for each player in everyone
+    announce [player]
+
+wait 10 seconds
+wait until condition
 ```
-if player has 5 kills            if player kill streak is at least 3
-if player armor is at least 8    if player health percent is more than 50
-if player is in lava             if player is under the open sky
-if player weapon is diamond sword
-if distance from Alex to Bob is at least 5
 
-add a kill Alex                  add a death Alex
-give player a diamond sword with sharpness 5
-shoot a red firework
+---
 
-when player first joins         when it starts raining
-when player takes fall damage   when day starts
-when player right clicks on a villager     when player presses a button
-when player goes to bed         when player wakes up
-```
+## Documentation
 
-## Quick start (real server)
+- **[Full Language Spec](verbum-engine/docs/SPEC.md)** — Grammar, all keywords, advanced features
+- **[Beginner Guide](verbum-engine/docs/GUIDE.md)** — Learn step-by-step with examples
+- **[Commands Reference](verbum-engine/docs/COMMANDS.md)** — All 200+ verbs and queries
+- **[Installation](verbum-paper/docs/INSTALL.md)** — Detailed setup for servers
+- **[Add-Ons](verbum-engine/docs/ADDONS.md)** — Extend Verbum with custom plugins
 
-Install the plugin and the CLI from the [Releases page](https://github.com/ftbxx1/verbum/releases),
-drop the plugin jar in `plugins/`, add files to `plugins/Verbum/scripts/`, run
-`/verbum reload`. Full steps: see `verbum-paper/docs/INSTALL.md`.
+---
+
+## Examples
+
+See `/verbum-engine/src/main/resources/scripts/examples/` for real scenarios:
+
+- **welcome.vb** — Greet players
+- **commands.vb** — Custom commands
+- **functions.vb** — Reusable code
+- **loops.vb** — Repeat logic
+- **quests.vb** — Multi-step events
+- **pvp_arena.vb** — Game logic
+- **money.vb** — Economy system
+- **boss_fight.vb** — Complex interaction
+
+---
 
 ## Tests
 
+```bash
+# Unit tests (lexer, parser, interpreter)
+mvn -pl verbum-engine test
+
+# Full test suite (includes acceptance test)
+powershell -File run-tests.ps1
 ```
-mvn -pl verbum-engine test        # lexer, parser, interpreter + mock runtime
-powershell -File run-tests.ps1    # acceptance demo + full test suite in one go
-```
 
-## Learn more
+---
 
-- [Full language specification](verbum-engine/docs/SPEC.md)
-- [Beginner guide](verbum-engine/docs/GUIDE.md)
-- [Command reference](verbum-engine/docs/COMMANDS.md)
-- [Install on a server](verbum-paper/docs/INSTALL.md)
+## Architecture
 
-## Join the community
+**verbum-engine/**
+- Pure Java, no Minecraft dependencies
+- Lexer, Parser, AST, Interpreter
+- Runtime interface for testing/extensibility
+- 20+ unit test classes
 
-Have a question, an idea, or a script you want to share? Come say hi on our
-Discord server:
+**verbum-paper/**
+- Paper plugin that bridges engine to live Minecraft
+- Loads scripts from `plugins/Verbum/scripts/`
+- Executes actions via Bukkit API
+- Queries world state
 
-**https://discord.gg/qnpHBEmbUC**
+---
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+---
+
+## Community
+
+Have ideas, questions, or scripts to share?
+
+**Join our Discord:** https://discord.gg/qnpHBEmbUC
+
+---
+
+## License
+
+MIT License — see [LICENSE](LICENSE)

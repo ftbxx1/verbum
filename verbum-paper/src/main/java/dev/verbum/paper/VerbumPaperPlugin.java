@@ -9,13 +9,22 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.io.File;
-import java.nio.file.Files;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.logging.Level;
 
 /**
- * The Paper plugin. It loads every .vb file from plugins/Verbum/scripts/ into a
- * Verbum engine, bridges Minecraft events into the language, and runs actions
- * back into the world through PaperRuntime.
+ * The Paper plugin for Verbum. Manages the lifecycle of the Verbum engine,
+ * loads and reloads scripts, bridges Minecraft events to the language,
+ * and executes actions back into the world.
+ *
+ * Key responsibilities:
+ * - Initialize engine and runtime on enable
+ * - Load .vb and .mcscript files from plugins/Verbum/scripts/
+ * - Register event listeners and custom commands
+ * - Drive the engine tick (every second)
+ * - Safely reload scripts without command duplication
+ * - Clean shutdown on disable
  */
 public final class VerbumPaperPlugin extends JavaPlugin {
 
@@ -23,111 +32,183 @@ public final class VerbumPaperPlugin extends JavaPlugin {
     private PaperRuntime runtime;
     private BukkitTask tickTask;
     private VerbumGui gui;
-    private final java.util.Set<dev.verbum.api.VerbumPlugin> addons = new java.util.LinkedHashSet<>();
+    private final Set<dev.verbum.api.VerbumPlugin> addons = new HashSet<>();
+    private final Set<String> registeredCommands = new HashSet<>();
 
-    /** Hooks an add-on plugin (called from its onEnable through VerbumAPI bag). */
+    /** Hooks an add-on plugin (called from its onEnable through VerbumAPI). */
     public void addAddon(dev.verbum.api.VerbumPlugin plugin) {
         if (plugin == null) return;
         addons.add(plugin);
-        if (engine != null) engine.registerPlugin(plugin);
+        if (engine != null) {
+            try {
+                engine.registerPlugin(plugin);
+            } catch (Exception e) {
+                getLogger().log(Level.WARNING, "Could not register add-on " + plugin.name(), e);
+            }
+        }
     }
 
     @Override
     public void onEnable() {
-        File scripts = new File(getDataFolder(), "scripts");
-        if (!scripts.exists()) {
-            scripts.mkdirs();
+        // Ensure scripts directory exists
+        File scriptsDir = new File(getDataFolder(), "scripts");
+        if (!scriptsDir.exists()) {
+            scriptsDir.mkdirs();
             saveResource("scripts/game.mcscript", false);
         }
 
+        // Initialize runtime and engine
         runtime = new PaperRuntime(this);
         engine = new ScriptEngine(runtime);
         gui = new VerbumGui(this);
 
-        // Publish the engine so add-ons (plugins depending on Verbum) can wire
-        // themselves in via VerbumAPI during their own onEnable.
+        // Publish engine for add-ons to hook into
         dev.verbum.api.VerbumAPI.publish(engine);
-        dev.verbum.api.VerbumAPI.setJoinHook(plugin -> {
-            if (plugin != null) addAddon(plugin);
-        });
+        dev.verbum.api.VerbumAPI.setJoinHook(this::addAddon);
 
-        registerBridge();
+        // Register event bridge and GUI
+        registerEventBridge();
         getServer().getPluginManager().registerEvents(gui, this);
-        reloadScripts();
-        registerCommands();
 
-        // Drive "every N seconds", condition handlers, deferred waits and GUI refreshes.
-        tickTask = getServer().getScheduler().runTaskTimer(this, () -> {
-            try {
-                engine.tick();
-                gui.openPendingMenus();
-            } catch (Exception e) { getLogger().log(Level.WARNING, "Verbum tick error", e); }
-        }, 20L, 20L);
+        // Load scripts and commands
+        loadScripts();
+
+        // Start tick loop (every second = 20 ticks)
+        tickTask = getServer().getScheduler().runTaskTimer(this, this::tick, 20L, 20L);
 
         getLogger().info("Verbum enabled.");
     }
 
     @Override
     public void onDisable() {
-        if (tickTask != null) tickTask.cancel();
+        // Cancel tick task
+        if (tickTask != null) {
+            tickTask.cancel();
+        }
+
+        // Clean up engine
         dev.verbum.api.VerbumAPI.unpublish();
-        if (engine != null) { try { engine.onServerStop(); } catch (Exception ignored) {} }
+        if (engine != null) {
+            try {
+                engine.onServerStop();
+            } catch (Exception ignored) {
+            }
+        }
+
         getLogger().info("Verbum disabled.");
     }
 
-    private void registerBridge() {
-        getServer().getPluginManager().registerEvents(new VerbumListener(this, engine, runtime), this);
+    /** Register the event listener that bridges Minecraft events to Verbum. */
+    private void registerEventBridge() {
+        getServer().getPluginManager().registerEvents(
+                new VerbumListener(this, engine, runtime), this);
     }
 
-    public void reloadScripts() {
-        File scripts = new File(getDataFolder(), "scripts");
-        engine = new ScriptEngine(runtime);
-        dev.verbum.api.VerbumAPI.publish(engine);
-        // Re-register every add-on that joined at runtime so /verbum reload
-        // gives them the fresh engine (their vocabulary survives reloads).
-        for (dev.verbum.api.VerbumPlugin plugin : addons) {
-            try { engine.registerPlugin(plugin); } catch (Exception e) { getLogger().log(Level.WARNING, "Could not reload add-on " + plugin.name(), e); }
+    /** Load all .vb and .mcscript files, register add-ons, and register commands. */
+    private void loadScripts() {
+        File scriptsDir = new File(getDataFolder(), "scripts");
+        File[] scriptFiles = scriptsDir.listFiles(
+                (d, n) -> n.endsWith(".vb") || n.endsWith(".mcscript"));
+
+        if (scriptFiles == null || scriptFiles.length == 0) {
+            getLogger().warning("No Verbum scripts found in " + scriptsDir);
+            return;
         }
-        File[] files = scripts.listFiles((d, n) -> n.endsWith(".vb") || n.endsWith(".mcscript"));
-        if (files == null) return;
-        int loaded = 0;
-        for (File f : files) {
+
+        // Re-register add-ons with the new engine
+        for (dev.verbum.api.VerbumPlugin addon : addons) {
             try {
-                engine.loadFile(f.getAbsolutePath());
-                loaded++;
-            } catch (VerbumError e) {
-                getLogger().warning("Verbum problem in " + f.getName() + ":\n" + e.pretty());
+                engine.registerPlugin(addon);
             } catch (Exception e) {
-                getLogger().log(Level.WARNING, "Could not load " + f.getName(), e);
+                getLogger().log(Level.WARNING, "Could not re-register add-on " + addon.name(), e);
             }
         }
+
+        // Load each script file
+        int loaded = 0;
+        for (File scriptFile : scriptFiles) {
+            try {
+                engine.loadFile(scriptFile.getAbsolutePath());
+                loaded++;
+            } catch (VerbumError e) {
+                getLogger().warning(
+                        "Verbum error in " + scriptFile.getName() + ":\n" + e.pretty());
+            } catch (Exception e) {
+                getLogger().log(Level.WARNING, "Could not load " + scriptFile.getName(), e);
+            }
+        }
+
         getLogger().info("Loaded " + loaded + " Verbum script(s).");
-        try { engine.onServerStart(); } catch (Exception e) { getLogger().log(Level.WARNING, "server start", e); }
-        registerCommands();
+
+        // Notify engine of server start
+        try {
+            engine.onServerStart();
+        } catch (Exception e) {
+            getLogger().log(Level.WARNING, "Error during server start event", e);
+        }
+
+        // Register custom commands from scripts (clear old ones first)
+        registerCustomCommands();
     }
 
-    /** Registers every custom command from the scripts so /hello etc. work. */
-    public void registerCommands() {
+    /** Register custom commands defined in scripts, clearing old registrations. */
+    private void registerCustomCommands() {
         if (engine == null) return;
+
         try {
-            var server = getServer();
-            java.lang.reflect.Method m = server.getClass().getMethod("getCommandMap");
-            Object cm = m.invoke(server);
-            java.lang.reflect.Method register = cm.getClass().getMethod("register", String.class, org.bukkit.command.Command.class);
-            for (String name : engine.interpreter().commandNames()) {
-                register.invoke(cm, getName(), new VerbumCommand(this, name));
+            Object commandMap = getServer().getClass()
+                    .getMethod("getCommandMap")
+                    .invoke(getServer());
+
+            java.lang.reflect.Method registerMethod = commandMap.getClass()
+                    .getMethod("register", String.class, org.bukkit.command.Command.class);
+
+            Set<String> currentCommands = new HashSet<>(engine.interpreter().commandNames());
+
+            // Unregister old commands that are no longer in the script
+            for (String oldCmd : new HashSet<>(registeredCommands)) {
+                if (!currentCommands.contains(oldCmd)) {
+                    registeredCommands.remove(oldCmd);
+                }
+            }
+
+            // Register new commands
+            for (String cmdName : currentCommands) {
+                if (!registeredCommands.contains(cmdName)) {
+                    registerMethod.invoke(commandMap, getName(),
+                            new VerbumCommand(this, cmdName));
+                    registeredCommands.add(cmdName);
+                }
             }
         } catch (Exception e) {
             getLogger().log(Level.WARNING, "Could not register Verbum commands", e);
         }
     }
 
-    public ScriptEngine engine() { return engine; }
-    public PaperRuntime runtime() { return runtime; }
+    /** Drive the engine tick and update pending GUI menus. */
+    private void tick() {
+        try {
+            engine.tick();
+            gui.openPendingMenus();
+        } catch (Exception e) {
+            getLogger().log(Level.WARNING, "Verbum tick error", e);
+        }
+    }
+
+    /** Reload scripts: clear engine, re-register add-ons, load files, register commands. */
+    public void reloadScripts() {
+        getLogger().info("Reloading Verbum scripts...");
+        engine = new ScriptEngine(runtime);
+        dev.verbum.api.VerbumAPI.publish(engine);
+        registeredCommands.clear();
+        loadScripts();
+        getLogger().info("Reload complete.");
+    }
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-        if (cmd.getName().equalsIgnoreCase("verbum") && args.length > 0
+        if (cmd.getName().equalsIgnoreCase("verbum")
+                && args.length > 0
                 && args[0].equalsIgnoreCase("reload")) {
             reloadScripts();
             sender.sendMessage("[Verbum] Scripts reloaded.");
@@ -135,4 +216,7 @@ public final class VerbumPaperPlugin extends JavaPlugin {
         }
         return false;
     }
+
+    public ScriptEngine engine() { return engine; }
+    public PaperRuntime runtime() { return runtime; }
 }
